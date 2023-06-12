@@ -13,11 +13,14 @@ find_package(rclcpp REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(nav2_msgs REQUIRED)
 find_package(nav2_costmap_2d REQUIRED)
-
-install(DIRECTORY launch DESTINATION share/${PROJECT_NAME}/)
+find_package(geometry_msgs REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(tf2_ros REQUIRED)
+# find_package(rosidl_default_generators REQUIRED)
 
 include_directories(
   include
+  # ${PROJECT_NAME}/srv
 )
 
 set(dependencies
@@ -25,7 +28,21 @@ set(dependencies
   nav_msgs
   nav2_msgs
   nav2_costmap_2d
+  geometry_msgs
+  tf2
+  tf2_ros
+  # rosidl_default_generators
   )
+
+
+# rosidl_generate_interfaces(${PROJECT_NAME}
+#   "srv/GetMultiPlan.srv"
+#   DEPENDENCIES
+#     geometry_msgs
+#     nav_msgs
+# )
+
+# ament_export_dependencies()
 
 add_executable(${lib_name}  src/multi_robot_planner.cpp)
 
@@ -36,9 +53,13 @@ ament_target_dependencies(${lib_name}
   ${dependencies}
 )
 
+install(DIRECTORY launch DESTINATION share/${PROJECT_NAME}/)
+
 install(DIRECTORY include/
   DESTINATION include/
 )
+
+# install(FILES mapping_rules.yaml DESTINATION share/${PROJECT_NAME})
 
 install(TARGETS ${lib_name}
   DESTINATION lib/${PROJECT_NAME}
@@ -46,7 +67,9 @@ install(TARGETS ${lib_name}
 
 ament_export_include_directories(include)
 ament_export_libraries(${lib_name})
-ament_export_dependencies(${dependencies})
+ament_export_dependencies(${dependencies}
+  # rosidl_default_runtime
+)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
