@@ -14,8 +14,7 @@
 #include <string>
 // TODO(@VineetTambe: replace unordered_map with boost:flatmap for efficiency)
 #include <unordered_map>
-// #include "ddg_multi_robot_msgs/srv/GetMultiPlan.hpp"
-// /home/vineet/ddg_mfi/mp_400_ws/src/ddg_multi_robot_planner/srv/GetMultiPlan.srv
+#include "ddg_multi_robot_srvs/srv/get_multi_plan.hpp"
 
 namespace multi_robot_planner
 {

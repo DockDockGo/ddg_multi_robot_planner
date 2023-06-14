@@ -16,7 +16,7 @@ find_package(nav2_costmap_2d REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
-# find_package(rosidl_default_generators REQUIRED)
+find_package(ddg_multi_robot_srvs REQUIRED)
 
 include_directories(
   include
@@ -31,18 +31,9 @@ set(dependencies
   geometry_msgs
   tf2
   tf2_ros
-  # rosidl_default_generators
+  ddg_multi_robot_srvs
   )
 
-
-# rosidl_generate_interfaces(${PROJECT_NAME}
-#   "srv/GetMultiPlan.srv"
-#   DEPENDENCIES
-#     geometry_msgs
-#     nav_msgs
-# )
-
-# ament_export_dependencies()
 
 add_executable(${lib_name}  src/multi_robot_planner.cpp)
 
@@ -68,7 +59,6 @@ install(TARGETS ${lib_name}
 ament_export_include_directories(include)
 ament_export_libraries(${lib_name})
 ament_export_dependencies(${dependencies}
-  # rosidl_default_runtime
 )
 
 if(BUILD_TESTING)
