@@ -14,8 +14,14 @@ namespace multi_robot_planner
     map_update_subscriber = this->create_subscription<nav_msgs::msg::OccupancyGrid>("/map", 10, std::bind(&MultiRobotPlanner::mapCallback, this, std::placeholders::_1));
 
     // create a ros2 service call to call planPaths
-    
-    
+    get_multi_plan_service_ = create_service<ddg_multi_robot_srvs::srv::GetMultiPlan>(
+        "/multi_robot_planner/get_plan",
+        [this](const std::shared_ptr<ddg_multi_robot_srvs::srv::GetMultiPlan::Request> request,
+              std::shared_ptr<ddg_multi_robot_srvs::srv::GetMultiPlan::Response> response) {
+            handleGetMultiPlanServiceRequest(request, response);
+        }
+    );
+
     // create a ros2 service call to call updateNamespaces
     // integrate ros2 params from launch files to get the robotnamespaces
 
@@ -238,28 +244,33 @@ namespace multi_robot_planner
     return ret;
   }
 
-  std::unordered_map<std::string, std::vector<geometry_msgs::msg::PoseStamped>> MultiRobotPlanner::planPaths(std::unordered_map<std::string, geometry_msgs::msg::PoseStamped> robot_curr_poses)
+  bool MultiRobotPlanner:: planPaths(
+            std::vector<std::string>& robot_namespaces,
+            std::vector<geometry_msgs::msg::Pose>& robot_start_poses,
+            std::vector<geometry_msgs::msg::Pose>& robot_goal_poses,
+            std::vector<nav_msgs::msg::Path>& planned_paths
+        )
   {
     // Plan paths for all robots based on their current poses
     // Return a mapping of robot namespace to their planned paths
 
     // Example:
-    std::vector<std::pair<int, int>> planned_paths;
+    // std::vector<std::pair<int, int>> planned_paths;
 
     // for (const auto &robot_pose : robot_curr_poses)
     // {
     //     const std::string &robot_namespace = robot_pose.first;
     //
 
-    updateRobotPoses();
+    // updateRobotPoses();
 
     //  TODO call CBS object
 
     // convertPathToPoseStamped(planned_paths);
 
-    std::unordered_map<std::string, std::vector<geometry_msgs::msg::PoseStamped>> temp;
+    // std::unordered_map<std::string, std::vector<geometry_msgs::msg::PoseStamped>> temp;
 
-    return temp;
+    return true;
   }
 
   std::vector<geometry_msgs::msg::PoseStamped> MultiRobotPlanner::convertPathToPoseStamped(std::vector<std::pair<int, int>> path)
@@ -271,6 +282,22 @@ namespace multi_robot_planner
     // ... convert the path to PoseStamped messages ...
     // return pose_stamped_path;
   }
+
+
+  void MultiRobotPlanner::handleGetMultiPlanServiceRequest(
+    const std::shared_ptr<ddg_multi_robot_srvs::srv::GetMultiPlan::Request> request,
+    std::shared_ptr<ddg_multi_robot_srvs::srv::GetMultiPlan::Response> response) {
+    try {
+      response->success = planPaths(request->robot_namespaces, request->start, request->goal, response->plan);
+      response->robot_namespaces = request->robot_namespaces;
+    } catch (const std::exception& ex) {
+      // Handle the exception
+      response->success = false;
+      // response->error_message = ex.what();
+      RCLCPP_ERROR(rclcpp::get_logger("rclcpp"), "Failed to plan paths: %s", ex.what());
+    }
+    return;
+}
 
 } // namespace multi_robot_planner
 

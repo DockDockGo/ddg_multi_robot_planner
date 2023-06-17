@@ -23,29 +23,6 @@ namespace multi_robot_planner
 
     class MultiRobotPlanner : public rclcpp::Node
     {
-    private:
-        // ROS2 vars
-        // rclcpp::Node::SharedPtr multi_robot_planner_node;
-        // Map update subscriber
-        rclcpp::Subscription<nav_msgs::msg::OccupancyGrid>::SharedPtr map_update_subscriber;
-        // Map service client
-        rclcpp::Client<nav_msgs::srv::GetMap>::SharedPtr get_map_srv_client;
-
-        // void handleServiceRequest(
-        //     const std::shared_ptr<example_interfaces::srv::AddTwoInts::Request> request,
-        //     std::shared_ptr<example_interfaces::srv::AddTwoInts::Response> response);
-
-        // rclcpp::Service<example_interfaces::srv::AddTwoInts>::SharedPtr service_;
-
-        std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
-        std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
-
-        std::vector<std::vector<char>> occupancy_map;
-        std::vector<std::string> robot_namespaces;
-        std::unordered_map<std::string, geometry_msgs::msg::PoseStamped> robot_curr_poses;
-
-        // TODO CBS object
-
     public:
         // Constructor
         MultiRobotPlanner();
@@ -61,12 +38,46 @@ namespace multi_robot_planner
         void handle_response(nav_msgs::srv::GetMap::Response::SharedPtr response);
         bool updateMap();
         bool updateRobotPoses();
-        bool getRobotPose(std::string &robot_namespace, geometry_msgs::msg::PoseStamped &robot_pose);
+        bool getRobotPose(
+            std::string &robot_namespace, 
+            geometry_msgs::msg::PoseStamped &robot_pose
+            );
         // Plan paths for all robots
-        std::unordered_map<std::string, std::vector<geometry_msgs::msg::PoseStamped>> planPaths(std::unordered_map<std::string, geometry_msgs::msg::PoseStamped> robot_goal_poses);
+        bool planPaths(
+            std::vector<std::string>& robot_namespaces,
+            std::vector<geometry_msgs::msg::Pose>& robot_start_poses,
+            std::vector<geometry_msgs::msg::Pose>& robot_goal_poses,
+            std::vector<nav_msgs::msg::Path>& planned_paths
+        );
+
 
         // TODO(@VineetTambe: updated the data structure of the argument)
         std::vector<geometry_msgs::msg::PoseStamped> convertPathToPoseStamped(std::vector<std::pair<int, int>> path);
+
+    private:
+        // ROS2 vars
+
+        // Map update subscriber
+        rclcpp::Subscription<nav_msgs::msg::OccupancyGrid>::SharedPtr map_update_subscriber;
+        // Map service client
+        rclcpp::Client<nav_msgs::srv::GetMap>::SharedPtr get_map_srv_client;
+
+        rclcpp::Service<ddg_multi_robot_srvs::srv::GetMultiPlan>::SharedPtr get_multi_plan_service_;
+
+        void handleGetMultiPlanServiceRequest(
+            const std::shared_ptr<ddg_multi_robot_srvs::srv::GetMultiPlan::Request> request,
+            std::shared_ptr<ddg_multi_robot_srvs::srv::GetMultiPlan::Response> response);
+
+        std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
+        std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
+
+        std::vector<std::vector<char>> occupancy_map;
+        std::vector<std::string> robot_namespaces;
+        std::unordered_map<std::string, geometry_msgs::msg::PoseStamped> robot_curr_poses;
+
+        // TODO CBS object
+
+
     };
 
 } // namespace multi_robot_planner
