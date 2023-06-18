@@ -15,6 +15,9 @@
 // TODO(@VineetTambe: replace unordered_map with boost:flatmap for efficiency)
 #include <unordered_map>
 #include "ddg_multi_robot_srvs/srv/get_multi_plan.hpp"
+// #include <boost/program_options.hpp>
+// #include <boost/tokenizer.hpp>
+// #include "CBS.h"
 
 namespace multi_robot_planner
 {
@@ -53,15 +56,14 @@ namespace multi_robot_planner
 
         // TODO(@VineetTambe: updated the data structure of the argument)
         std::vector<geometry_msgs::msg::PoseStamped> convertPathToPoseStamped(std::vector<std::pair<int, int>> path);
-
     private:
         // ROS2 vars
-
+        
         // Map update subscriber
         rclcpp::Subscription<nav_msgs::msg::OccupancyGrid>::SharedPtr map_update_subscriber;
         // Map service client
         rclcpp::Client<nav_msgs::srv::GetMap>::SharedPtr get_map_srv_client;
-
+        // Map service request
         rclcpp::Service<ddg_multi_robot_srvs::srv::GetMultiPlan>::SharedPtr get_multi_plan_service_;
 
         void handleGetMultiPlanServiceRequest(
@@ -76,7 +78,16 @@ namespace multi_robot_planner
         std::unordered_map<std::string, geometry_msgs::msg::PoseStamped> robot_curr_poses;
 
         // TODO CBS object
-
+        std::string _map_file_name = "/home/admin/ddg_mfi/mp_400_ws/src/ddg_multi_robot_planner/maps/svd_demo-parsed-map.txt";
+        std::string _agent_scen_file_name = "/home/admin/ddg_mfi/mp_400_ws/src/ddg_multi_robot_planner/maps/svd_demo-scen.txt";
+        int _map_height;
+        int _map_width;
+        bool createAgentScenarioFile(std::vector<geometry_msgs::msg::Pose>& robot_start_poses,
+            std::vector<geometry_msgs::msg::Pose>& robot_goal_poses, 
+            std::string &map_file_name,
+            int &map_height,
+            int &map_width,
+            std::string &file_path);
 
     };
 
