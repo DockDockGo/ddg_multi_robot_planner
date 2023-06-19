@@ -17,6 +17,7 @@ find_package(geometry_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(ddg_multi_robot_srvs REQUIRED)
+find_package(CBS REQUIRED)
 
 include_directories(
   include
@@ -32,6 +33,7 @@ set(dependencies
   tf2
   tf2_ros
   ddg_multi_robot_srvs
+  CBS
   )
 
 
