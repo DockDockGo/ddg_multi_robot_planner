@@ -679,19 +679,23 @@ int main(int argc, char *argv[])
   rclcpp::init(argc, argv);
   rclcpp::spin(std::make_shared<multi_robot_planner::MultiRobotPlanner>());
 
-  // crete a service call to get paths for n robots -> service call.
-  /** Service call accepts the following arguments:
-  0. get the map                      [x]
-  1. start position of the robot      [ ]
-  2. goal postion of the robot        [ ]
-  3. robot namespaces                 [ ]
+  /** Important TODOs:
+  0. get the map                        [x]
+  1. start position of the robot        [x] (update requirement)
+  2. goal postion of the robot          [x] (update requirement)
+  3. robot namespaces                   [x] (update requirement)
+  4. down-sample map                    [ ]
+  5. Update CBS.cpp to work with a map object rather than a file [ ]
+  6. Update CBS.cpp to work with a vector of start and goal poses rather than a scen file [ ]
+  7. Integrate with ROS2 nav2 and multi_robot_navigator package [ ]
+  
+  Misc:
+  0. store map file using relative path [ ]
+  1. If map file exisits just create a scenario file [ ]
 
-  Service call returns the following:
-  1. A hashmap of posestamped messages with pose for each robot.
-  */
-
-  // TODO call this service call from multi-navigator node.
-
+  **/  
+  
+  
   // Shutdown ROS2
   rclcpp::shutdown();
   return 0;
