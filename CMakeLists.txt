@@ -17,11 +17,13 @@ find_package(geometry_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(ddg_multi_robot_srvs REQUIRED)
-find_package(CBS REQUIRED)
 
+# Find Boost
+find_package(Boost REQUIRED COMPONENTS program_options system filesystem)
 include_directories(
-  include
+  "include/${PROJECT_NAME}"
   # ${PROJECT_NAME}/srv
+  ${Boost_INCLUDE_DIRS}
 )
 
 set(dependencies
@@ -33,14 +35,13 @@ set(dependencies
   tf2
   tf2_ros
   ddg_multi_robot_srvs
-  CBS
   )
 
+file(GLOB SOURCES "src/*.cpp")
+add_executable(${lib_name} ${SOURCES})
 
-add_executable(${lib_name}  src/multi_robot_planner.cpp)
+target_link_libraries(${lib_name} ${Boost_LIBRARIES})
 
-# add_library(${lib_name} SHARED
-#         src/multi_robot_planner.cpp)
 
 ament_target_dependencies(${lib_name}
   ${dependencies}
@@ -51,8 +52,6 @@ install(DIRECTORY launch DESTINATION share/${PROJECT_NAME}/)
 install(DIRECTORY include/
   DESTINATION include/
 )
-
-# install(FILES mapping_rules.yaml DESTINATION share/${PROJECT_NAME})
 
 install(TARGETS ${lib_name}
   DESTINATION lib/${PROJECT_NAME}
