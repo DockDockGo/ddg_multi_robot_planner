@@ -1,4 +1,4 @@
-#include "ddg_multi_robot_planner/multi_robot_planner.hpp"
+#include "multi_robot_planner.hpp"
 #include "CBS.h"
 // #include <CBS.h>
 namespace multi_robot_planner
@@ -268,10 +268,12 @@ namespace multi_robot_planner
       // }
       if (cbs.solution_found)
       {
-        RCLCPP_INFO(this->get_logger(), "Succesfully found a path! Sacing it to file");
+        RCLCPP_INFO(this->get_logger(), "Succesfully found a path! Saving it to file");
 
         // TODO Replace this with a function to get paths from cbs
         cbs.savePaths(_planned_path_file_name);
+      } else {
+        RCLCPP_ERROR(this->get_logger(), "Failed to find a path!");
       }
       cbs.clearSearchEngines();
 
@@ -283,15 +285,140 @@ namespace multi_robot_planner
         RCLCPP_INFO(this->get_logger(), "Yay!");
         // TODO publish the planned paths
         // return;
+      } else {
+        RCLCPP_ERROR(this->get_logger(), "Failed to read planned path from file!");
       }
     }
     catch (const std::exception &ex)
     {
       RCLCPP_ERROR(this->get_logger(), "Error in parsing occupancy grid: %s",
                    ex.what());
-      // RCLCPP_ERROR(rclcpp::get_logger("service_client"), "Service call failed:
-      // %s", e.what());
     }
+  }
+
+  void MultiRobotPlanner::publishPlannedPaths(std::vector<nav_msgs::msg::Path> &planned_paths)
+  {
+    // TODO publish the planned paths
+
+    // TODO use timers and return a flag var here
+
+    // This is just dummy code for testing -> replace this with the actual robot pose 
+      std::vector<geometry_msgs::msg::Pose> robot_start_poses;
+      std::vector<geometry_msgs::msg::Pose> robot_goal_poses;
+      // test code
+      geometry_msgs::msg::Pose tempPose;
+      tempPose.position.x = 1.0;
+      tempPose.position.y = 2.0;
+      robot_start_poses.push_back(tempPose);
+      tempPose.position.x = 2.0;
+      tempPose.position.y = 3.0;
+      robot_start_poses.push_back(tempPose);
+      tempPose.position.x = 4.0;
+      tempPose.position.y = 5.0;
+      robot_start_poses.push_back(tempPose);
+      tempPose.position.x = 6.0;
+      tempPose.position.y = 7.0;
+      robot_start_poses.push_back(tempPose);
+      tempPose.position.x = 8.0;
+      tempPose.position.y = 9.0;
+      robot_start_poses.push_back(tempPose);
+
+      tempPose.position.x = 8.0;
+      tempPose.position.y = 9.0;
+      robot_goal_poses.push_back(tempPose);
+      tempPose.position.x = 10.0;
+      tempPose.position.y = 11.0;
+      robot_goal_poses.push_back(tempPose);
+      tempPose.position.x = 12.0;
+      tempPose.position.y = 13.0;
+      robot_goal_poses.push_back(tempPose);
+      tempPose.position.x = 14.0;
+      tempPose.position.y = 15.0;
+      robot_goal_poses.push_back(tempPose);
+      tempPose.position.x = 16.0;
+      tempPose.position.y = 17.0;
+      robot_goal_poses.push_back(tempPose);
+
+      bool res = createAgentScenarioFile(robot_start_poses, robot_goal_poses,
+                                         _map_file_name, _map_height, _map_width,
+                                         _agent_scen_file_name);
+
+      // TODO add some sort of mutex here
+      if (!res)
+      {
+        RCLCPP_ERROR(this->get_logger(), "Failed to create scenario file");
+        // return false;
+        return;
+      }
+
+      RCLCPP_INFO(this->get_logger(), "Scenario file created running the cbs solver");
+
+      //////////////////////////////////////////////////////////////////////
+      /// run
+      //////////////////////////////////////////////////////////////////////
+
+      Instance instance(_map_file_name, _agent_scen_file_name,
+                        _agentNum, _agentIdx,
+                        _rows, _cols, _num_obstacles, _warehouseWidth);
+
+      CBS cbs(instance, _use_sipp, 1);
+      cbs.setPrioritizeConflicts(_prioritizingConflicts);
+      cbs.setDisjointSplitting(_disjointSplitting);
+      cbs.setBypass(_bypass);
+      cbs.setRectangleReasoning(_rectangleReasoning);
+      cbs.setCorridorReasoning(_corridorReasoning);
+      cbs.setHeuristicType(_heuristics);
+      cbs.setTargetReasoning(_targetReasoning);
+      cbs.setMutexReasoning(_mutexReasoning);
+      cbs.setSavingStats(_saving_stats);
+      cbs.setNodeLimit(_nodeLimit);
+
+      double runtime = 0;
+      int min_f_val = 0;
+      for (int i = 0; i < _max_runs; i++)
+      {
+        cbs.clear();
+        cbs.solve(_cutoffTime, min_f_val);
+        runtime += cbs.runtime;
+        if (cbs.solution_found)
+          break;
+        min_f_val = (int)cbs.min_f_val;
+        cbs.randomRoot = true;
+      }
+      cbs.runtime = runtime;
+
+      //////////////////////////////////////////////////////////////////////
+      /// write results to files
+      //////////////////////////////////////////////////////////////////////
+      // if (vm.count("output"))
+      //   cbs.saveResults(vm["output"].as<string>(), vm["agents"].as<string>() + ":" + vm["agentIdx"].as<string>());
+      // // cbs.saveCT(vm["output"].as<string>() + ".tree"); // for debug
+      // if (vm["stats"].as<bool>())
+      // {
+      //   cbs.saveStats(vm["output"].as<string>(), vm["agents"].as<string>() + ":" + vm["agentIdx"].as<string>());
+      // }
+      if (cbs.solution_found)
+      {
+        RCLCPP_INFO(this->get_logger(), "Succesfully found a path! Saving it to file");
+
+        // TODO Replace this with a function to get paths from cbs
+        cbs.savePaths(_planned_path_file_name);
+      } else {
+        RCLCPP_ERROR(this->get_logger(), "Failed to find a path!");
+      }
+      cbs.clearSearchEngines();
+
+      // load paths and return them
+      // std::vector<nav_msgs::msg::Path> planned_paths;
+      if (readPlannedPathFromFile(_planned_path_file_name, planned_paths))
+      {
+        RCLCPP_INFO(this->get_logger(), "Successfully read planned path from file");
+        RCLCPP_INFO(this->get_logger(), "Yay!");
+        // TODO publish the planned paths
+        // return;
+      } else {
+        RCLCPP_ERROR(this->get_logger(), "Failed to read planned path from file!");
+      }
   }
 
   // Function to read line from a text file and store coordinates in an array
@@ -503,6 +630,8 @@ namespace multi_robot_planner
       std::vector<nav_msgs::msg::Path> &planned_paths)
   {
     updateMap();
+    // std::vector<nav_msgs::msg::Path> planned_paths;
+    // publishPlannedPaths(planned_paths);
 
     return true;
   }

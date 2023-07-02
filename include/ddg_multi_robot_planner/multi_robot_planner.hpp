@@ -19,7 +19,7 @@
 #include <vector>
 #include <string>
 #include <sstream>
-#include <CBS.h>
+#include "CBS.h"
 
 namespace multi_robot_planner
 {
@@ -129,6 +129,9 @@ namespace multi_robot_planner
 
         double _cutoffTime = 60.0; // cutoff time in seconds | default 60.0
         void configure();
+
+        void publishPlannedPaths(std::vector<nav_msgs::msg::Path> &planned_paths);
+
     };
 
 } // namespace multi_robot_planner
