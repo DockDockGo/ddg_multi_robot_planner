@@ -12,10 +12,15 @@ namespace multi_robot_planner
     get_map_srv_client =
         this->create_client<nav_msgs::srv::GetMap>("/map_server/map");
 
-    // Not implemented properly
+    // TODO (@VineetTambe : Set subscriber QOS to Transient local -> to ensure map is received)
+
+    auto qos = rclcpp::QoS(rclcpp::QoSInitialization::from_rmw(rmw_qos_profile_default));
+        qos.transient_local(); // Set QoS to transient local
+
+
     map_update_subscriber =
         this->create_subscription<nav_msgs::msg::OccupancyGrid>(
-            "/map", 10,
+            "/map", qos,
             std::bind(&MultiRobotPlanner::mapCallback, this,
                       std::placeholders::_1));
 
@@ -79,16 +84,75 @@ namespace multi_robot_planner
   void MultiRobotPlanner::mapCallback(
       const nav_msgs::msg::OccupancyGrid::SharedPtr msg)
   {
-    // TODO (@VineetTambe: change this to an actual mpa update this function)
-    // Print out the width and height of the occupancy grid
-    std::cout << "Received map with width=" << msg->info.width
-              << " and height=" << msg->info.height << std::endl;
+    // TODO (@VineetTambe: change this to an actual map update this function)
+
+    occupancy_map.resize(msg->info.height,
+                           std::vector<char>(msg->info.width, 0));
+      _map_height = msg->info.height;
+      _map_width = msg->info.width;  
+      _map_resolution = msg->info.resolution;
+      _map_origin = msg->info.origin;
+
+      std::cout << "Received map with width=" << _map_width
+              << " and height=" << _map_height << std::endl;
+
+      // parseMap(occupancy_map, msg);
+
+      RCLCPP_INFO(this->get_logger(), "Successfully received map");
   }
+
+  void MultiRobotPlanner::writeMapToFile(
+      cv::Mat &occupancy_map,
+      const std::string &file_path)
+  {
+    RCLCPP_INFO(this->get_logger(), "inside writeMapToFile");
+    std::string temp_map_file_name = "/home/admin/ddg_mfi/mp_400_ws/src/ddg_multi_robot_planner/maps/down_sampled-neo_track1-parsed-map.txt";
+
+    std::ofstream file(temp_map_file_name);
+    if (!file.is_open())
+    {
+      // RCLCPP_ERROR(rclcpp::get_logger("service_client"), "Failed to open file
+      // for writing");
+      return;
+    }
+    file << "type octile" << std::endl;
+    file << "height " << occupancy_map.rows << std::endl;
+    file << "width " << occupancy_map.cols << std::endl;
+    file << "map" << std::endl;
+    
+    // Write map data to file
+    for (int i = 0; i < (int)occupancy_map.rows; i++)
+    {
+      for (int j = 0; j < (int)occupancy_map.cols; j++)
+      {
+        if (occupancy_map.at<int>(i, j) == 0)
+        {
+          file << ".";
+        }
+        else //if (occupancy_map.at<int>(i, j) > 50)
+        {
+          file << "@";
+        }
+      }
+      file << std::endl;
+    }
+
+    file.close();
+
+    // RCLCPP_INFO(this->get_logger(), "Map written to file: %s",
+    //             file_path.c_str());
+  }
+
 
   void MultiRobotPlanner::writeMapToFile(
       std::vector<std::vector<char>> &occupancy_map,
       const std::string &file_path)
   {
+
+    // TODO remove this;
+    return;
+
+
     std::ofstream file(file_path);
     if (!file.is_open())
     {
@@ -114,30 +178,319 @@ namespace multi_robot_planner
 
     file.close();
 
-    RCLCPP_INFO(rclcpp::get_logger("service_client"), "Map written to file: %s",
+    RCLCPP_INFO(this->get_logger(), "Map written to file: %s",
                 file_path.c_str());
   }
 
   void MultiRobotPlanner::parseMap(std::vector<std::vector<char>> &occupancy_map,
                                    const nav_msgs::msg::OccupancyGrid &map)
   {
+    return;
+    RCLCPP_INFO(this->get_logger(), "inside parseMap");
+
+    _map_height = map.info.height;
+    _map_width = map.info.width;
+    _map_resolution = map.info.resolution;
+
+    cv::Mat inter_map(_map_height, _map_width, CV_8UC1);
+
+    // store the coordinates in x,y fashion with
+    // Note opencv inverts the coordinates
+    _crop_top_left.first = 0;
+    _crop_top_left.second = 0;
+    _crop_bottom_right.first = _map_height;
+    _crop_bottom_right.second = _map_width;
+  
+
+    //populate the cv mat with the map data
     for (int i = 0; i < (int)map.info.height; i++)
     {
       for (int j = 0; j < (int)map.info.width; j++)
-      {
+      { 
+
         if (map.data[i * (int)map.info.width + j] > 50)
         {
           // RCLCPP_INFO(rclcpp::get_logger("service_client"), "HERE");
-          occupancy_map[i][j] = '@';
+          inter_map.at<int>(i, j) = 255;
+          // std::cout<<'@';
         }
         else
         {
-          occupancy_map[i][j] = '.';
+          inter_map.at<int>(i, j) = 0;
+          // std::cout<<'.';
         }
       }
+      // std::cout<<"\n";
     }
+
+    // cv::Mat thresholdedMap(_map_height, _map_width, CV_8UC1);
+    // for(int i = 0; i < _map_height; i++)
+    // {
+    //   for(int j = 0; j < _map_width; j++)
+    //   {
+    //     if(inter_map.at<int>(i, j) == 255)
+    //     {
+    //       thresholdedMap.at<int>(i, j) = 255;
+    //     }
+    //     else
+    //     {
+    //       thresholdedMap.at<int>(i, j) = 0;
+    //     }
+    //   }
+    // }
+    // cv::threshold(inter_map, thresholdedMap, 55 /* threshold value */, 255 /*max value*/, cv::THRESH_BINARY);
+    // bool breakFlag = false;
+    // //  TODO (@VineetTambe: update this implementation using CUDA to parallelize the for loops?)
+    // for (int i = 0; i < thresholdedMap.rows; i++) {
+    //     uchar* rowPtr = thresholdedMap.ptr<uchar>(i);
+    //     for (int j = 0; j < thresholdedMap.cols; j++) {
+    //         if (rowPtr[j] == 255) {
+    //             _crop_top_left.second = i;
+    //             breakFlag = true;
+    //             break;
+    //         }
+    //     }
+    //     if (breakFlag) {
+    //         break;
+    //     }
+    // }
+
+    // breakFlag = false;
+    // for (int i = thresholdedMap.rows -1 ; i >=0; i--) {
+    //     uchar* rowPtr = thresholdedMap.ptr<uchar>(i);
+    //     for (int j = 0; j < thresholdedMap.cols; j++) {
+    //         if (rowPtr[j] == 255) {
+    //             _crop_bottom_right.second = i;
+    //             breakFlag = true;
+    //             break;
+    //         }
+    //     }
+    //     if (breakFlag) {
+    //         break;
+    //     }
+    // }
+
+    // thresholdedMap = thresholdedMap.t();
+    // breakFlag = false;
+    // for (int i = 0; i < thresholdedMap.rows; i++) {
+    //     uchar* rowPtr = thresholdedMap.ptr<uchar>(i);
+    //     for (int j = 0; j < thresholdedMap.cols; j++) {
+    //         if (rowPtr[j] == 255) {
+    //             _crop_top_left.first = i;
+    //             breakFlag = true;
+    //             break;
+    //         }
+    //     }
+    //     if (breakFlag) {
+    //         break;
+    //     }
+    // }
+
+    // breakFlag = false;
+    // for (int i = thresholdedMap.rows -1 ; i >=0; i--) {
+    //     uchar* rowPtr = thresholdedMap.ptr<uchar>(i);
+    //     for (int j = 0; j < thresholdedMap.cols; j++) {
+    //         if (rowPtr[j] == 255) {
+    //             _crop_bottom_right.first = i;
+    //             breakFlag = true;
+    //             break;
+    //         }
+    //     }
+    //     if (breakFlag) {
+    //         break;
+    //     }
+    // }
+
+    // std::cout<< "Top left = " << _crop_top_left.first << " " << _crop_top_left.second << std::endl;
+    // std::cout<< "Bottom right = " << _crop_bottom_right.first << " " << _crop_bottom_right.second << std::endl;
+
+    // RCLCPP_INFO(this->get_logger(), "thresholding map");
+
+    // thresholdedMap = thresholdedMap.t();
+
+    // RCLCPP_INFO(this->get_logger(), "cropping map");
+
+    // cv::Mat cropped_map = inter_map(cv::Rect(_crop_top_left.second, _crop_top_left.first,
+    //                                          _crop_bottom_right.second - _crop_top_left.second,
+    //                                          _crop_bottom_right.first - _crop_top_left.first));
+
+    int kernel_size = (int) (_robot_dim / _map_resolution);
+
+    RCLCPP_INFO(this->get_logger(), "dilating map");
+
+    // use cv2 dilate to expand the obstacles
+    // cv::Mat dilated_map;
+    // cv::dilate(thresholdedMap, dilated_map, cv::getStructuringElement(cv::MORPH_RECT, cv::Size(kernel_size, kernel_size)));
+
+    RCLCPP_INFO(this->get_logger(), "downsampling map");
+
+    // cv::Mat downsampledMap((int)(cropped_map.rows / kernel_size), (int)(cropped_map.cols / kernel_size), CV_8UC1);;
+    // // cv::resize(dilated_map, downsampledMap, cv::Size(), 1.0 / kernel_size, 1.0 / kernel_size, cv::INTER_NEAREST);
+    // for(int i = 0 ; i < downsampledMap.rows; i++) {
+    //     for(int j = 0 ; j < downsampledMap.cols; j++) {
+    //         downsampledMap.at<int>(i,j) = dilated_map.at<int>(i*kernel_size, j*kernel_size);
+    //     }
+    // }
+
+    RCLCPP_INFO(this->get_logger(), "writing map to file");
+
     // TODO change file naming method
-    writeMapToFile(occupancy_map, _map_file_name);
+    writeMapToFile(inter_map, _map_file_name);
+  }
+
+  void MultiRobotPlanner::parseMap(std::vector<std::vector<char>> &occupancy_map,
+                                   const nav_msgs::msg::OccupancyGrid::SharedPtr map)
+  {
+    RCLCPP_INFO(this->get_logger(), "inside parseMap pointer version");
+
+    _map_height = map->info.height;
+    _map_width = map->info.width;
+    _map_resolution = map->info.resolution;
+
+    cv::Mat inter_map(_map_height, _map_width, CV_8UC1);
+
+    // store the coordinates in x,y fashion with
+    // Note opencv inverts the coordinates
+    _crop_top_left.first = 0;
+    _crop_top_left.second = 0;
+    _crop_bottom_right.first = _map_height;
+    _crop_bottom_right.second = _map_width;
+  
+
+    //populate the cv mat with the map data
+    for (int i = 0; i < (int)map->info.height; i++)
+    {
+      for (int j = 0; j < (int)map->info.width; j++)
+      { 
+        // std::cout<<'%d ' << map->data[i * (int)map->info.width + j] ;
+        if (map->data[i * (int)map->info.width + j] > 10)
+        {
+          // RCLCPP_INFO(rclcpp::get_logger("service_client"), "HERE");
+          inter_map.at<int>(i, j) = 254;
+          std::cout<<'@';
+        }
+        else
+        {
+          inter_map.at<int>(i, j) = 0;
+          // std::cout<<'.';
+        }
+      }
+      // std::cout<<"\n";
+    }
+
+    // cv::Mat thresholdedMap(_map_height, _map_width, CV_8UC1);
+    // for(int i = 0; i < _map_height; i++)
+    // {
+    //   for(int j = 0; j < _map_width; j++)
+    //   {
+    //     if(inter_map.at<int>(i, j) == 255)
+    //     {
+    //       thresholdedMap.at<int>(i, j) = 255;
+    //     }
+    //     else
+    //     {
+    //       thresholdedMap.at<int>(i, j) = 0;
+    //     }
+    //   }
+    // }
+    // cv::threshold(inter_map, thresholdedMap, 55 /* threshold value */, 255 /*max value*/, cv::THRESH_BINARY);
+    // bool breakFlag = false;
+    // //  TODO (@VineetTambe: update this implementation using CUDA to parallelize the for loops?)
+    // for (int i = 0; i < thresholdedMap.rows; i++) {
+    //     uchar* rowPtr = thresholdedMap.ptr<uchar>(i);
+    //     for (int j = 0; j < thresholdedMap.cols; j++) {
+    //         if (rowPtr[j] == 255) {
+    //             _crop_top_left.second = i;
+    //             breakFlag = true;
+    //             break;
+    //         }
+    //     }
+    //     if (breakFlag) {
+    //         break;
+    //     }
+    // }
+
+    // breakFlag = false;
+    // for (int i = thresholdedMap.rows -1 ; i >=0; i--) {
+    //     uchar* rowPtr = thresholdedMap.ptr<uchar>(i);
+    //     for (int j = 0; j < thresholdedMap.cols; j++) {
+    //         if (rowPtr[j] == 255) {
+    //             _crop_bottom_right.second = i;
+    //             breakFlag = true;
+    //             break;
+    //         }
+    //     }
+    //     if (breakFlag) {
+    //         break;
+    //     }
+    // }
+
+    // thresholdedMap = thresholdedMap.t();
+    // breakFlag = false;
+    // for (int i = 0; i < thresholdedMap.rows; i++) {
+    //     uchar* rowPtr = thresholdedMap.ptr<uchar>(i);
+    //     for (int j = 0; j < thresholdedMap.cols; j++) {
+    //         if (rowPtr[j] == 255) {
+    //             _crop_top_left.first = i;
+    //             breakFlag = true;
+    //             break;
+    //         }
+    //     }
+    //     if (breakFlag) {
+    //         break;
+    //     }
+    // }
+
+    // breakFlag = false;
+    // for (int i = thresholdedMap.rows -1 ; i >=0; i--) {
+    //     uchar* rowPtr = thresholdedMap.ptr<uchar>(i);
+    //     for (int j = 0; j < thresholdedMap.cols; j++) {
+    //         if (rowPtr[j] == 255) {
+    //             _crop_bottom_right.first = i;
+    //             breakFlag = true;
+    //             break;
+    //         }
+    //     }
+    //     if (breakFlag) {
+    //         break;
+    //     }
+    // }
+
+    // std::cout<< "Top left = " << _crop_top_left.first << " " << _crop_top_left.second << std::endl;
+    // std::cout<< "Bottom right = " << _crop_bottom_right.first << " " << _crop_bottom_right.second << std::endl;
+
+    // RCLCPP_INFO(this->get_logger(), "thresholding map");
+
+    // thresholdedMap = thresholdedMap.t();
+
+    // RCLCPP_INFO(this->get_logger(), "cropping map");
+
+    // cv::Mat cropped_map = inter_map(cv::Rect(_crop_top_left.second, _crop_top_left.first,
+    //                                          _crop_bottom_right.second - _crop_top_left.second,
+    //                                          _crop_bottom_right.first - _crop_top_left.first));
+
+    int kernel_size = (int) (_robot_dim / _map_resolution);
+
+    RCLCPP_INFO(this->get_logger(), "dilating map");
+
+    // use cv2 dilate to expand the obstacles
+    // cv::Mat dilated_map;
+    // cv::dilate(thresholdedMap, dilated_map, cv::getStructuringElement(cv::MORPH_RECT, cv::Size(kernel_size, kernel_size)));
+
+    RCLCPP_INFO(this->get_logger(), "downsampling map");
+
+    // cv::Mat downsampledMap((int)(cropped_map.rows / kernel_size), (int)(cropped_map.cols / kernel_size), CV_8UC1);;
+    // // cv::resize(dilated_map, downsampledMap, cv::Size(), 1.0 / kernel_size, 1.0 / kernel_size, cv::INTER_NEAREST);
+    // for(int i = 0 ; i < downsampledMap.rows; i++) {
+    //     for(int j = 0 ; j < downsampledMap.cols; j++) {
+    //         downsampledMap.at<int>(i,j) = dilated_map.at<int>(i*kernel_size, j*kernel_size);
+    //     }
+    // }
+
+    RCLCPP_INFO(this->get_logger(), "writing map to file");
+
+    // TODO change file naming method
+    writeMapToFile(inter_map, _map_file_name);
   }
 
   void MultiRobotPlanner::printMap(std::vector<std::vector<char>> &map)
@@ -152,7 +505,7 @@ namespace multi_robot_planner
     }
   }
 
-  void MultiRobotPlanner::handle_response(
+  void MultiRobotPlanner::handle_map_received_response(
       nav_msgs::srv::GetMap::Response::SharedPtr response)
   {
     std::vector<std::vector<char>> occupancy_map;
@@ -163,12 +516,16 @@ namespace multi_robot_planner
       occupancy_map.resize(response->map.info.height,
                            std::vector<char>(response->map.info.width, 0));
       _map_height = response->map.info.height;
-      _map_width = response->map.info.width;
+      _map_width = response->map.info.width;  
+      _map_resolution = response->map.info.resolution;
+      _map_origin = response->map.info.origin;
       // occupancy_map.resize(response->map.info.height,
       // std::vector<char>(response->map.info.width, 0));
       parseMap(occupancy_map, response->map);
 
       RCLCPP_INFO(this->get_logger(), "Successfully received map");
+
+      // return;
 
       // TODO use timers and return a flag var here
 
@@ -303,55 +660,55 @@ namespace multi_robot_planner
     // TODO use timers and return a flag var here
 
     // This is just dummy code for testing -> replace this with the actual robot pose 
-      std::vector<geometry_msgs::msg::Pose> robot_start_poses;
-      std::vector<geometry_msgs::msg::Pose> robot_goal_poses;
-      // test code
-      geometry_msgs::msg::Pose tempPose;
-      tempPose.position.x = 1.0;
-      tempPose.position.y = 2.0;
-      robot_start_poses.push_back(tempPose);
-      tempPose.position.x = 2.0;
-      tempPose.position.y = 3.0;
-      robot_start_poses.push_back(tempPose);
-      tempPose.position.x = 4.0;
-      tempPose.position.y = 5.0;
-      robot_start_poses.push_back(tempPose);
-      tempPose.position.x = 6.0;
-      tempPose.position.y = 7.0;
-      robot_start_poses.push_back(tempPose);
-      tempPose.position.x = 8.0;
-      tempPose.position.y = 9.0;
-      robot_start_poses.push_back(tempPose);
+      // std::vector<geometry_msgs::msg::Pose> robot_start_poses;
+      // std::vector<geometry_msgs::msg::Pose> robot_goal_poses;
+      // // test code
+      // geometry_msgs::msg::Pose tempPose;
+      // tempPose.position.x = 1.0;
+      // tempPose.position.y = 2.0;
+      // robot_start_poses.push_back(tempPose);
+      // tempPose.position.x = 2.0;
+      // tempPose.position.y = 3.0;
+      // robot_start_poses.push_back(tempPose);
+      // tempPose.position.x = 4.0;
+      // tempPose.position.y = 5.0;
+      // robot_start_poses.push_back(tempPose);
+      // tempPose.position.x = 6.0;
+      // tempPose.position.y = 7.0;
+      // robot_start_poses.push_back(tempPose);
+      // tempPose.position.x = 8.0;
+      // tempPose.position.y = 9.0;
+      // robot_start_poses.push_back(tempPose);
 
-      tempPose.position.x = 8.0;
-      tempPose.position.y = 9.0;
-      robot_goal_poses.push_back(tempPose);
-      tempPose.position.x = 10.0;
-      tempPose.position.y = 11.0;
-      robot_goal_poses.push_back(tempPose);
-      tempPose.position.x = 12.0;
-      tempPose.position.y = 13.0;
-      robot_goal_poses.push_back(tempPose);
-      tempPose.position.x = 14.0;
-      tempPose.position.y = 15.0;
-      robot_goal_poses.push_back(tempPose);
-      tempPose.position.x = 16.0;
-      tempPose.position.y = 17.0;
-      robot_goal_poses.push_back(tempPose);
+      // tempPose.position.x = 8.0;
+      // tempPose.position.y = 9.0;
+      // robot_goal_poses.push_back(tempPose);
+      // tempPose.position.x = 10.0;
+      // tempPose.position.y = 11.0;
+      // robot_goal_poses.push_back(tempPose);
+      // tempPose.position.x = 12.0;
+      // tempPose.position.y = 13.0;
+      // robot_goal_poses.push_back(tempPose);
+      // tempPose.position.x = 14.0;
+      // tempPose.position.y = 15.0;
+      // robot_goal_poses.push_back(tempPose);
+      // tempPose.position.x = 16.0;
+      // tempPose.position.y = 17.0;
+      // robot_goal_poses.push_back(tempPose);
 
-      bool res = createAgentScenarioFile(robot_start_poses, robot_goal_poses,
-                                         _map_file_name, _map_height, _map_width,
-                                         _agent_scen_file_name);
+      // bool res = createAgentScenarioFile(robot_start_poses, robot_goal_poses,
+      //                                    _map_file_name, _map_height, _map_width,
+      //                                    _agent_scen_file_name);
 
       // TODO add some sort of mutex here
-      if (!res)
-      {
-        RCLCPP_ERROR(this->get_logger(), "Failed to create scenario file");
-        // return false;
-        return;
-      }
+      // if (!res)
+      // {
+      //   RCLCPP_ERROR(this->get_logger(), "Failed to create scenario file");
+      //   // return false;
+      //   return;
+      // }
 
-      RCLCPP_INFO(this->get_logger(), "Scenario file created running the cbs solver");
+      // RCLCPP_INFO(this->get_logger(), "Scenario file created running the cbs solver");
 
       //////////////////////////////////////////////////////////////////////
       /// run
@@ -515,7 +872,7 @@ namespace multi_robot_planner
       {
         auto response = future.get();
         RCLCPP_INFO(this->get_logger(), "inside the handle response callback !");
-        handle_response(response);
+        handle_map_received_response(response);
       }
       catch (const std::exception &e)
       {
@@ -629,9 +986,9 @@ namespace multi_robot_planner
       std::vector<geometry_msgs::msg::Pose> &robot_goal_poses,
       std::vector<nav_msgs::msg::Path> &planned_paths)
   {
-    updateMap();
+    // updateMap();
     // std::vector<nav_msgs::msg::Path> planned_paths;
-    // publishPlannedPaths(planned_paths);
+    publishPlannedPaths(planned_paths);
 
     return true;
   }

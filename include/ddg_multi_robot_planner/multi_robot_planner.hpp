@@ -20,6 +20,7 @@
 #include <string>
 #include <sstream>
 #include "CBS.h"
+#include <opencv2/opencv.hpp>
 
 namespace multi_robot_planner
 {
@@ -37,12 +38,21 @@ namespace multi_robot_planner
 
         void updateNamespaces(std::vector<std::string> &robot_namespaces);
         void mapCallback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg);
+        
+
         void writeMapToFile(std::vector<std::vector<char>> &occupancy_map,
                             const std::string &file_path);
         void parseMap(std::vector<std::vector<char>> &occupancy_map,
                       const nav_msgs::msg::OccupancyGrid &map);
         void printMap(std::vector<std::vector<char>> &map);
-        void handle_response(nav_msgs::srv::GetMap::Response::SharedPtr response);
+
+        void writeMapToFile(cv::Mat &occupancy_map,
+                    const std::string &file_path);
+
+        void parseMap(std::vector<std::vector<char>> &occupancy_map,
+                                const nav_msgs::msg::OccupancyGrid::SharedPtr map);
+
+        void handle_map_received_response(nav_msgs::srv::GetMap::Response::SharedPtr response);
         bool updateMap();
         bool updateRobotPoses();
         bool getRobotPose(std::string &robot_namespace,
@@ -85,16 +95,22 @@ namespace multi_robot_planner
 
         // TODO CBS object
         std::string _map_file_name =
-            "/home/admin/ddg_mfi/mp_400_ws/src/ddg_multi_robot_planner/maps/"
-            "svd_demo-parsed-map.txt";
+            "/home/admin/ddg_mfi/mp_400_ws/src/ddg_multi_robot_planner/maps/workshop0-downsampled-map.txt";
         std::string _agent_scen_file_name =
-            "/home/admin/ddg_mfi/mp_400_ws/src/ddg_multi_robot_planner/maps/"
-            "svd_demo-scen.txt";
+            "/home/admin/ddg_mfi/mp_400_ws/src/ddg_multi_robot_planner/maps/workshop0-downsampled-scen.txt";
         std::string _planned_path_file_name =
-            "/home/admin/ddg_mfi/mp_400_ws/src/ddg_multi_robot_planner/maps/"
-            "planned-paths.txt";
+            "/home/admin/ddg_mfi/mp_400_ws/src/ddg_multi_robot_planner/maps/planned-paths-downsampled.txt";
+        std::string _downsampled_map_metadata_file_name =
+            "/home/admin/ddg_mfi/mp_400_ws/src/ddg_multi_robot_planner/maps/workshop0-downsampled-map-metadata.txt";
         int _map_height;
         int _map_width;
+        float _map_resolution;
+        float _robot_dim = 0.5; // meters 
+        geometry_msgs::msg::Pose _map_origin;
+        std::pair<int,int> _crop_top_left;
+        std::pair<int,int> _crop_bottom_right;
+        
+
         bool createAgentScenarioFile(
             std::vector<geometry_msgs::msg::Pose> &robot_start_poses,
             std::vector<geometry_msgs::msg::Pose> &robot_goal_poses,
