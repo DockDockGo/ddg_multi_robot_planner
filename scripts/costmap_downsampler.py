@@ -24,22 +24,22 @@ def load_map_from_file(file_path):
     ret[ret >= 55] = 255
     ret[ret < 55] = 0
 
-    ret = 255 - ret
+    # ret = 255 - ret
 
-    return ret
+    return ret.astype(np.uint8)
 
 def downsample_map(map_file_path):
     map = load_map_from_file(map_file_path)
     map_resolution = 0.05  # in meters about 0.05 default
     robot_cell_size = 0.5  # meters default
-    map = 255 - map.astype(np.uint8)
+    # map = map.astype(np.uint8)
     kernel_size = np.ceil(robot_cell_size / map_resolution)
 
 
-    top_x = 0
-    top_y = 0
-    bottom_x = map.shape[1]
-    bottom_y = map.shape[0]
+    top_x = 0 #top left x
+    top_y = 0 #top left y
+    bottom_x = map.shape[1] #botom right x
+    bottom_y = map.shape[0] #bottom right y
 
     yeet = False
     for y in range(map.shape[0]):
@@ -107,12 +107,19 @@ def downsample_map(map_file_path):
     # subsample the nms thresholded image
     map = map[:: int(kernel_size), :: int(kernel_size)]
 
+    offset_file_path = map_file_path.split("-")[0] + "-downsampled-map-metadata.txt"
+    
+    with open(offset_file_path, 'w') as f:
+        f.write("image: "  + map_file_path.split("/")[-1] + "\n")
+        f.write("base-resolution: " + str(map_resolution) + "\n")
+        f.write("scaling: " + str(kernel_size) + "\n")
+        f.write("offset: " + str(top_x) + " " + str(top_y) + "\n")
+        
     return map
 
 def visualize_map(file_path):
     # Load the map data from the file
     map_data = downsample_map(file_path)
-
     # Create a figure and axis for plotting
     fig, ax = plt.subplots()
 
@@ -128,11 +135,32 @@ def visualize_map(file_path):
     # plt.show()
 
     # Save the image
-    plt.savefig('diff_map.png')
+    # plt.savefig('down_map.png')
+    return map_data
+
+
+def save_cbs_map(map_data, file_path):
+    with open(file_path, 'w') as f:
+        f.write("type octile\n")
+        f.write("height " + str(map_data.shape[0]) + "\n")
+        f.write("width " + str(map_data.shape[1]) + "\n")
+        f.write("map\n")
+
+        for row in map_data:
+            for col in row:
+                if col > 250:
+                    f.write("@")
+                else:
+                    f.write(".")
+            f.write("\n")
 
 # Specify the path to the map file
 map_file_path = "../maps/workshop0-parsed-map.txt"
 file_path = "../maps/svd_demo-parsed-map.txt"
+downsample_map_file_path = "../maps/workshop0-downsampled-map.txt"
+
 
 # Visualize the map
-visualize_map(map_file_path)
+map_data = visualize_map(map_file_path)
+
+save_cbs_map(map_data, downsample_map_file_path)
