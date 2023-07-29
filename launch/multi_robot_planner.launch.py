@@ -17,6 +17,8 @@ def generate_launch_description():
         package="ddg_multi_robot_planner",
         executable="ddg_multi_robot_planner_node",
         output="screen",
+        # prefix=['xterm -e gdb -ex run --args'],
+        # prefix=['gdb -ex run --args'],
     )
 
     # Add the node to the launch description
