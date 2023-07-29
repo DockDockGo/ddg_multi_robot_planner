@@ -7,6 +7,8 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
+add_compile_options(-g)
+
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
@@ -17,6 +19,7 @@ find_package(geometry_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(ddg_multi_robot_srvs REQUIRED)
+find_package(OpenCV REQUIRED)
 
 # Find Boost
 find_package(Boost REQUIRED COMPONENTS program_options system filesystem)
@@ -35,6 +38,7 @@ set(dependencies
   tf2
   tf2_ros
   ddg_multi_robot_srvs
+  OpenCV
   )
 
 file(GLOB SOURCES "src/*.cpp")
