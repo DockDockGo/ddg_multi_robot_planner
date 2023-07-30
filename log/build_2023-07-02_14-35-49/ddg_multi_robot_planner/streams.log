@@ -1,0 +1,12 @@
+[0.026s] Invoking command in '/home/yjt/Lego_factory/ddg_multi_robot_planner/build/ddg_multi_robot_planner': CMAKE_PREFIX_PATH=/home/yjt/Lego_factory/ddg_multi_robot_srvs/install/ddg_multi_robot_srvs:/opt/ros/foxy:/opt/ros/noetic CONDA_PROMPT_MODIFIER=(base) /usr/bin/cmake --build /home/yjt/Lego_factory/ddg_multi_robot_planner/build/ddg_multi_robot_planner -- -j12 -l12
+[0.082s] [ 90%] Built target CBS
+[0.087s] [ 95%] [32mBuilding CXX object CMakeFiles/ddg_multi_robot_planner_node.dir/ros_interface/src/multi_robot_planner.cpp.o[0m
+[0.207s] In file included from [01m[K/home/yjt/Lego_factory/ddg_multi_robot_planner/src/ros_interface/src/multi_robot_planner.cpp:1[m[K:
+[0.207s] [01m[K/home/yjt/Lego_factory/ddg_multi_robot_planner/src/ros_interface/include/ddg_multi_robot_planner/multi_robot_planner.hpp:13:10:[m[K [01;31m[Kfatal error: [m[Kddg_multi_robot_srvs/srv/get_multi_plan.hpp: No such file or directory
+[0.207s]    13 | #include [01;31m[K"ddg_multi_robot_srvs/srv/get_multi_plan.hpp"[m[K
+[0.207s]       |          [01;31m[K^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[m[K
+[0.207s] compilation terminated.
+[0.209s] make[2]: *** [CMakeFiles/ddg_multi_robot_planner_node.dir/build.make:63: CMakeFiles/ddg_multi_robot_planner_node.dir/ros_interface/src/multi_robot_planner.cpp.o] Error 1
+[0.209s] make[1]: *** [CMakeFiles/Makefile2:80: CMakeFiles/ddg_multi_robot_planner_node.dir/all] Error 2
+[0.215s] make: *** [Makefile:141: all] Error 2
+[0.218s] Invoked command in '/home/yjt/Lego_factory/ddg_multi_robot_planner/build/ddg_multi_robot_planner' returned '2': CMAKE_PREFIX_PATH=/home/yjt/Lego_factory/ddg_multi_robot_srvs/install/ddg_multi_robot_srvs:/opt/ros/foxy:/opt/ros/noetic CONDA_PROMPT_MODIFIER=(base) /usr/bin/cmake --build /home/yjt/Lego_factory/ddg_multi_robot_planner/build/ddg_multi_robot_planner -- -j12 -l12

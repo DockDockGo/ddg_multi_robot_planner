@@ -691,6 +691,27 @@ void CBS::savePaths(const string &fileName) const
     output.close();
 }
 
+/**
+* Retrive the solved path from CBS
+* @return: retrive_path 
+*/
+void CBS::getSolvedPaths(std::vector< std::vector< std::pair<int, int> > >& retrive_path)
+{
+	retrive_path.clear();
+    for (int i = 0; i < num_of_agents; i++)
+    {
+		std::vector< std::pair<int, int> > solution_path;
+		solution_path.clear();
+        for (const auto & t : *paths[i]){
+			std::pair<int, int> tmp_loc;
+			tmp_loc.first = search_engines[0]->instance.getRowCoordinate(t.location);
+			tmp_loc.second = search_engines[0]->instance.getColCoordinate(t.location);
+			solution_path.push_back(tmp_loc);
+		}
+		retrive_path.push_back(solution_path);
+    }
+}
+
 void CBS::printConflicts(const CBSNode &curr)
 {
 	for (const auto& conflict : curr.conflicts)

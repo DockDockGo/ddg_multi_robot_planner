@@ -1,0 +1,65 @@
+-- The C compiler identification is GNU 10.3.0
+-- The CXX compiler identification is GNU 10.3.0
+-- Check for working C compiler: /usr/bin/cc
+-- Check for working C compiler: /usr/bin/cc -- works
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Check for working CXX compiler: /usr/bin/c++
+-- Check for working CXX compiler: /usr/bin/c++ -- works
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Found ament_cmake: 0.9.12 (/opt/ros/foxy/share/ament_cmake/cmake)
+-- Found PythonInterp: /home/yjt/anaconda3/bin/python3 (found suitable version "3.9.13", minimum required is "3") 
+-- Using PYTHON_EXECUTABLE: /home/yjt/anaconda3/bin/python3
+-- Found rclcpp: 2.4.3 (/opt/ros/foxy/share/rclcpp/cmake)
+-- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c
+-- Found rosidl_adapter: 1.3.1 (/opt/ros/foxy/share/rosidl_adapter/cmake)
+-- Found OpenSSL: /usr/lib/x86_64-linux-gnu/libcrypto.so (found version "1.1.1f")  
+-- Found FastRTPS: /opt/ros/foxy/include  
+-- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp
+-- Found rmw_implementation_cmake: 1.0.4 (/opt/ros/foxy/share/rmw_implementation_cmake/cmake)
+-- Using RMW implementation 'rmw_fastrtps_cpp' as default
+-- Looking for pthread.h
+-- Looking for pthread.h - found
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Failed
+-- Looking for pthread_create in pthreads
+-- Looking for pthread_create in pthreads - not found
+-- Looking for pthread_create in pthread
+-- Looking for pthread_create in pthread - found
+-- Found Threads: TRUE  
+-- Found nav_msgs: 2.0.5 (/opt/ros/foxy/share/nav_msgs/cmake)
+-- Found nav2_msgs: 0.4.7 (/opt/ros/foxy/share/nav2_msgs/cmake)
+-- Found nav2_costmap_2d: 0.4.7 (/opt/ros/foxy/share/nav2_costmap_2d/cmake)
+-- Found Eigen3: TRUE (found version "3.3.7") 
+-- Found ddg_multi_robot_srvs: 0.0.0 (/home/yjt/Lego_factory/ddg_multi_robot_srvs/install/ddg_multi_robot_srvs/share/ddg_multi_robot_srvs/cmake)
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /home/yjt/Lego_factory/ddg_multi_robot_planner/build/ddg_multi_robot_planner
+[35m[1mScanning dependencies of target ddg_multi_robot_planner_node[0m
+[35m[1mScanning dependencies of target CBS[0m
+[  4%] [32mBuilding CXX object CMakeFiles/CBS.dir/CBSH2-RTC/src/CBS.cpp.o[0m
+[  9%] [32mBuilding CXX object CMakeFiles/CBS.dir/CBSH2-RTC/src/CorridorReasoning.cpp.o[0m
+[ 14%] [32mBuilding CXX object CMakeFiles/CBS.dir/CBSH2-RTC/src/Instance.cpp.o[0m
+[ 19%] [32mBuilding CXX object CMakeFiles/CBS.dir/CBSH2-RTC/src/CBSHeuristic.cpp.o[0m
+[ 28%] [32mBuilding CXX object CMakeFiles/CBS.dir/CBSH2-RTC/src/Conflict.cpp.o[0m
+[ 28%] [32mBuilding CXX object CMakeFiles/CBS.dir/CBSH2-RTC/src/IncrementalPairwiseMutexPropagation.cpp.o[0m
+[ 33%] [32mBuilding CXX object CMakeFiles/CBS.dir/CBSH2-RTC/src/ConstraintPropagation.cpp.o[0m
+[ 38%] [32mBuilding CXX object CMakeFiles/CBS.dir/CBSH2-RTC/src/CBSNode.cpp.o[0m
+[ 42%] [32mBuilding CXX object CMakeFiles/CBS.dir/CBSH2-RTC/src/ConstraintTable.cpp.o[0m
+[ 47%] [32mBuilding CXX object CMakeFiles/CBS.dir/CBSH2-RTC/src/MutexReasoning.cpp.o[0m
+[ 52%] [32mBuilding CXX object CMakeFiles/CBS.dir/CBSH2-RTC/src/MDD.cpp.o[0m
+[ 57%] [32mBuilding CXX object CMakeFiles/ddg_multi_robot_planner_node.dir/ros_interface/src/multi_robot_planner.cpp.o[0m
+[ 61%] [32mBuilding CXX object CMakeFiles/CBS.dir/CBSH2-RTC/src/RectangleReasoning.cpp.o[0m
+[ 66%] [32mBuilding CXX object CMakeFiles/CBS.dir/CBSH2-RTC/src/ReservationTable.cpp.o[0m
+[ 71%] [32mBuilding CXX object CMakeFiles/CBS.dir/CBSH2-RTC/src/SIPP.cpp.o[0m
+[ 76%] [32mBuilding CXX object CMakeFiles/CBS.dir/CBSH2-RTC/src/SingleAgentSolver.cpp.o[0m
+[ 80%] [32mBuilding CXX object CMakeFiles/CBS.dir/CBSH2-RTC/src/SpaceTimeAStar.cpp.o[0m
+[ 85%] [32mBuilding CXX object CMakeFiles/CBS.dir/CBSH2-RTC/src/common.cpp.o[0m
+[ 90%] [32mBuilding CXX object CMakeFiles/CBS.dir/CBSH2-RTC/src/driver.cpp.o[0m
+[ 95%] [32m[1mLinking CXX static library libCBS.a[0m
+[ 95%] Built target CBS

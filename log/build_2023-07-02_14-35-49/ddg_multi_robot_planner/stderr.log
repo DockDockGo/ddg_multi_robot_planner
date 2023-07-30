@@ -1,0 +1,8 @@
+In file included from [01m[K/home/yjt/Lego_factory/ddg_multi_robot_planner/src/ros_interface/src/multi_robot_planner.cpp:1[m[K:
+[01m[K/home/yjt/Lego_factory/ddg_multi_robot_planner/src/ros_interface/include/ddg_multi_robot_planner/multi_robot_planner.hpp:13:10:[m[K [01;31m[Kfatal error: [m[Kddg_multi_robot_srvs/srv/get_multi_plan.hpp: No such file or directory
+   13 | #include [01;31m[K"ddg_multi_robot_srvs/srv/get_multi_plan.hpp"[m[K
+      |          [01;31m[K^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[m[K
+compilation terminated.
+make[2]: *** [CMakeFiles/ddg_multi_robot_planner_node.dir/build.make:63: CMakeFiles/ddg_multi_robot_planner_node.dir/ros_interface/src/multi_robot_planner.cpp.o] Error 1
+make[1]: *** [CMakeFiles/Makefile2:80: CMakeFiles/ddg_multi_robot_planner_node.dir/all] Error 2
+make: *** [Makefile:141: all] Error 2

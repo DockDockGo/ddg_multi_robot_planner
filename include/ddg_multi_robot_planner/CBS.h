@@ -1,5 +1,6 @@
 #pragma once
 
+#include <utility>
 #include "CBSHeuristic.h"
 #include "RectangleReasoning.h"
 #include "CorridorReasoning.h"
@@ -73,6 +74,7 @@ public:
 	void saveStats(const string &fileName, const string &instanceName) const;
 	void saveCT(const string &fileName) const; // write the CT to a file
     void savePaths(const string &fileName) const; // write the paths to a file
+	void getSolvedPaths(std::vector< std::vector< std::pair<int, int> > >& retrive_path);
 
 	void clear(); // used for rapid random  restart
 
