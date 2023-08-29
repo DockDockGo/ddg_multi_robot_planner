@@ -14,9 +14,11 @@ find_package(nav_msgs REQUIRED)
 find_package(nav2_msgs REQUIRED)
 find_package(nav2_costmap_2d REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(visualization_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(ddg_multi_robot_srvs REQUIRED)
+
 
 # Find Boost
 find_package(Boost REQUIRED COMPONENTS program_options system filesystem)
@@ -32,6 +34,7 @@ set(dependencies
   nav2_msgs
   nav2_costmap_2d
   geometry_msgs
+  visualization_msgs
   tf2
   tf2_ros
   ddg_multi_robot_srvs

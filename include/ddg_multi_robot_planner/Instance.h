@@ -12,11 +12,18 @@ public:
 	int map_size = 0;
 
 	Instance() = default;
+    Instance(const string& map_fname);
 	Instance(const string& map_fname, const string& agent_fname, 
 		int num_of_agents = 0, const string& agent_indices = "",
 		int num_of_rows = 0, int num_of_cols = 0, int num_of_obstacles = 0, int warehouse_width = 0);
 
 	void printAgents() const;
+    bool updateAgents(int agent_num, 
+        std::vector<std::pair<int, int>>& agent_start,
+        std::vector<std::pair<int, int>>& agent_goal);
+    
+    bool updateStarts(std::vector<std::pair<int, int>>& agent_start);
+    bool updateGoals(std::vector<std::pair<int, int>>& agent_goal);
 
 
 	inline bool isObstacle(int loc) const { return my_map[loc]; }
@@ -100,6 +107,7 @@ public:
 	}
 
 	int getDefaultNumberOfAgents() const { return num_of_agents; }
+	void printMap() const;
 
 private:
 	  // int moves_offset[MOVE_COUNT];
@@ -112,16 +120,16 @@ private:
 	  vector<int> goal_locations;
 
 	bool loadMap();
-	void printMap() const;
 	void saveMap() const;
+    
 
 	bool loadAgents();
 	void saveAgents() const;
 
-	  void generateConnectedRandomGrid(int rows, int cols, int obstacles); // initialize new [rows x cols] map with random obstacles
-	  void generateRandomAgents(int warehouse_width);
-	  bool addObstacle(int obstacle); // add this obsatcle only if the map is still connected
-	  bool isConnected(int start, int goal) const; // run BFS to find a path between start and goal, return true if a path exists.
+    void generateConnectedRandomGrid(int rows, int cols, int obstacles); // initialize new [rows x cols] map with random obstacles
+    void generateRandomAgents(int warehouse_width);
+    bool addObstacle(int obstacle); // add this obsatcle only if the map is still connected
+    bool isConnected(int start, int goal) const; // run BFS to find a path between start and goal, return true if a path exists.
 
 	int randomWalk(int loc, int steps) const;
 

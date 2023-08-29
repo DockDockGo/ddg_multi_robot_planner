@@ -44,6 +44,33 @@ Instance::Instance(const string& map_fname, const string& agent_fname,
 
 }
 
+Instance::Instance(const string& map_fname): map_fname(map_fname)
+{
+	bool succ = loadMap();
+	if (!succ)
+	{
+        cerr << "Map file " << map_fname << " not found." << endl;
+        exit(-1);
+	}
+
+	// succ = loadAgents();
+	// if (!succ)
+	// {
+	// 	if (num_of_agents > 0)
+	// 	{
+	// 		generateRandomAgents(warehouse_width);
+	// 		saveAgents();
+	// 	}
+	// 	else
+	// 	{
+	// 		cerr << "Agent file " << agent_fname << " not found." << endl;
+	// 		exit(-1);
+	// 	}
+	// }
+
+}
+
+
 
 int Instance::randomWalk(int curr, int steps) const
 {
@@ -307,6 +334,7 @@ void Instance::printMap() const
 		}
 		cout << endl;
 	}
+    // printf("At location (8, 40), the value is: %d\n", my_map[linearizeCoordinate(8, 40)]);
 }
 
 
@@ -334,6 +362,34 @@ void Instance::saveMap() const
 	myfile.close();
 }
 
+bool Instance::updateAgents(int agent_num, 
+    std::vector<std::pair<int, int>>& agent_start,
+    std::vector<std::pair<int, int>>& agent_goal)
+{
+    num_of_agents = agent_num;
+    std::vector<int> ids(num_of_agents);
+    start_locations.resize(num_of_agents);
+    goal_locations.resize(num_of_agents);
+    for (int i = 0; i < num_of_agents; i++) {
+        ids[i] = i;
+        start_locations[i] = linearizeCoordinate(agent_start[i].first, agent_start[i].second);
+        goal_locations[i] = linearizeCoordinate(agent_goal[i].first, agent_goal[i].second);
+    }
+}
+
+bool Instance::updateStarts(std::vector<std::pair<int, int>>& agent_start)
+{
+    for (int i = 0; i < num_of_agents; i++) {
+        start_locations[i] = linearizeCoordinate(agent_start[i].first, agent_start[i].second);
+    }
+}
+
+bool Instance::updateGoals(std::vector<std::pair<int, int>>& agent_goal)
+{
+    for (int i = 0; i < num_of_agents; i++) {
+        goal_locations[i] = linearizeCoordinate(agent_goal[i].first, agent_goal[i].second);
+    }
+}
 
 bool Instance::loadAgents()
 {
