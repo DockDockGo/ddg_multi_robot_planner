@@ -1,0 +1,4 @@
+image: workshop0-parsed-map.txt
+base-resolution: 0.05
+scaling: 10.0
+offset: 1706 1806

@@ -1,0 +1,6 @@
+version 1
+0	/home/admin/ddg_mfi/mp_400_ws/src/ddg_multi_robot_planner/maps/svd_demo-parsed-map.txt	0	0	1828	1844	1967	2125	1
+0	/home/admin/ddg_mfi/mp_400_ws/src/ddg_multi_robot_planner/maps/svd_demo-parsed-map.txt	0	0	1828	1854	1967	2115    1
+0	/home/admin/ddg_mfi/mp_400_ws/src/ddg_multi_robot_planner/maps/svd_demo-parsed-map.txt	0	0	1828	1864	1967	2105	1
+0	/home/admin/ddg_mfi/mp_400_ws/src/ddg_multi_robot_planner/maps/svd_demo-parsed-map.txt	0	0	1828	1874	1967	2095	1
+0	/home/admin/ddg_mfi/mp_400_ws/src/ddg_multi_robot_planner/maps/svd_demo-parsed-map.txt	0	0	1828	1884	1967	2085	1
