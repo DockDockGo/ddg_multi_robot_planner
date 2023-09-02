@@ -34,7 +34,7 @@ using namespace std::chrono_literals;
 
 #define AHEAD_TIME 0
 #define EPS 0.8
-#define WAITSTEP 5
+#define WAITSTEP 10
 
 // struct AgentState{
 //     int x;
@@ -107,6 +107,7 @@ namespace multi_robot_planner
         void publishPlannedPaths(std::vector<std::pair<int, int>> &planned_paths);
         void timer_callback();
         void RobotPoseCallback(const nav_msgs::msg::Odometry::SharedPtr msg);
+        void RobotGoalPoseCallback(const geometry_msgs::msg::PoseStamped::SharedPtr msg);
         bool updateRobotPlan(std::vector<StatePath>& robot_state_paths);
         void PublishCBSPath(int agent_idx, StatePath& agent_path);
         void PublishSingleMarker(int agent_idx, std::string marker_type);
