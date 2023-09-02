@@ -10,7 +10,7 @@ namespace multi_robot_planner
 
         publisher_ = this->create_publisher<std_msgs::msg::String>("topic", 10);
         timer_ = this->create_wall_timer(
-            3000ms, std::bind(&MultiRobotPlanner::timer_callback, this));
+            1500ms, std::bind(&MultiRobotPlanner::timer_callback, this));
 
         RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "Start multi robot planner!");
 
@@ -19,31 +19,31 @@ namespace multi_robot_planner
             robot_namespaces.push_back(tmp_robot_name);
 
             std::string tmp_goal_topic_name = "/" + tmp_robot_name + "/goal_pose";
-            RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "The topic for agent is: " << tmp_goal_topic_name);
+            RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "The topic to publish goal pose for agent is: " << tmp_goal_topic_name);
             rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr tmp_publisher = 
                 this->create_publisher<geometry_msgs::msg::PoseStamped>(tmp_goal_topic_name, 10);
                 agents_pub_pose.push_back(tmp_publisher);
 
             std::string tmp_path_topic_name = "/" + tmp_robot_name + "/cbs_path";
-            RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "The topic for agent is: " << tmp_path_topic_name);
+            RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "The topic to publish computed path for agent is: " << tmp_path_topic_name);
             rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr tmp_path_publisher = 
                 this->create_publisher<nav_msgs::msg::Path>(tmp_path_topic_name, 10);
                 agents_pub_path.push_back(tmp_path_publisher);
 
             tmp_path_topic_name = "/" + tmp_robot_name + "/start_marker";
-            RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "The topic for agent is: " << tmp_path_topic_name);
+            RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "The topic to publish start markers for RVIZ: " << tmp_path_topic_name);
             rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr tmp_start_marker_publisher = 
                 this->create_publisher<visualization_msgs::msg::Marker>(tmp_path_topic_name, 10);
                 agents_pub_start_marker.push_back(tmp_start_marker_publisher);
             
             tmp_path_topic_name = "/" + tmp_robot_name + "/goal_marker";
-            RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "The topic for agent is: " << tmp_path_topic_name);
+            RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "The topic to publish goal markers for RVIZ: " << tmp_path_topic_name);
             rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr tmp_goal_marker_publisher = 
                 this->create_publisher<visualization_msgs::msg::Marker>(tmp_path_topic_name, 10);
-                agents_pub_goal_marker.push_back(tmp_goal_marker_publisher);
+            agents_pub_goal_marker.push_back(tmp_goal_marker_publisher);
 
             std::string tmp_pose_topic_name = "/" + tmp_robot_name + "/odom";
-            RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "The topic for agent is: " << tmp_pose_topic_name);
+            RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "The topic to subscribe for agent odom is: " << tmp_pose_topic_name);
             rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr tmp_pose_sub = 
                 this->create_subscription<nav_msgs::msg::Odometry>(
                 tmp_pose_topic_name, 10, std::bind(&MultiRobotPlanner::RobotPoseCallback, this, std::placeholders::_1));
@@ -51,10 +51,13 @@ namespace multi_robot_planner
 
             // TODO @VineetTambe:  Convert this to a service 
             std::string tmp_agent_goal_pose_sub_name = "/" + tmp_robot_name + "/cbs_path/goal_pose";
-            RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "The topic for agent is: " << tmp_agent_goal_pose_sub_name);
-            rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr tmp_goal_pose_sub = 
+            RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "The topic to subscribe agent target goal pose is: " << tmp_agent_goal_pose_sub_name);
+            rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr tmp_target_goal_pose_sub = 
                 this->create_subscription<geometry_msgs::msg::PoseStamped>(
-                tmp_agent_goal_pose_sub_name, 10, std::bind(&MultiRobotPlanner::RobotGoalPoseCallback, this, std::placeholders::_1));
+                tmp_agent_goal_pose_sub_name, 
+                10, 
+                std::bind(&MultiRobotPlanner::RobotGoalPoseCallback, this, std::placeholders::_1));
+            agents_sub_target_goal_pose.push_back(tmp_target_goal_pose_sub);
         }
 
         Initialize();
@@ -186,20 +189,24 @@ namespace multi_robot_planner
         if (!planner_initialized){
             return;
         }
-        PublishMarker();
         std::vector<StatePath> planned_paths;
 
-        int agent_finish_count = 0;
+        // int agent_finish_count = 0;
         for (int i = 0; i < _agentNum; i++) {
             if (robots_paths[i].empty()) {
                 RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Agent %d reaches its goal", i);
-                agent_finish_count++;
-                // if (at_goal_wait[i] > 0) {
-                //     at_goal_wait[i]--;
-                //     continue;
-                // } else {
-                //     at_goal_wait[i] = WAITSTEP;
-                // }
+                if (at_goal_wait[i] > 0) {
+                    at_goal_wait[i]--;
+                    continue;
+                } else {
+                    at_goal_wait[i] = WAITSTEP;
+                }
+                geometry_msgs::msg::Pose next_tmp_pose = robot_curr_poses[i];
+                std::pair<int, int> next_tmp_state = coordToCBS(next_tmp_pose);
+                next_round_start[i] = next_tmp_state;
+                next_round_goal[i] = GLOBAL_GOAL[i];
+                // agent_finish_count++;
+ 
                 // if (!trip_directions[i]) {
                 //     next_round_goal[i] = GLOBAL_START[i];
                 //     geometry_msgs::msg::Pose next_tmp_pose = robot_curr_poses[i];
@@ -224,9 +231,11 @@ namespace multi_robot_planner
         instance_ptr->updateGoals(next_round_goal);
         callCBS(planned_paths);
         updateRobotPlan(planned_paths);
+        PublishMarker();
         for (unsigned int i = 0; i < _agentNum; i++) {
             PublishCBSPath(i, planned_paths[i]);
         }
+
     }
 
     void MultiRobotPlanner::PublishMarker()
@@ -325,13 +334,13 @@ namespace multi_robot_planner
     }
 
     void MultiRobotPlanner::RobotGoalPoseCallback(const geometry_msgs::msg::PoseStamped::SharedPtr msg) {
-      std::string frame_header = msg->header.frame_id;
+      std::string agent_name = msg->header.frame_id;
       unsigned int agent_idx = 0;
       bool correct_msg = false;
       try {
           // TODO add check for missing frame id
           for (unsigned int i = 0; i < _agentNum; i++){
-              if (frame_header.find(robot_namespaces[i]) != std::string::npos) {
+              if (agent_name.find(robot_namespaces[i]) != std::string::npos) {
                   agent_idx = i;
                   correct_msg = true;
                   break;
@@ -344,10 +353,11 @@ namespace multi_robot_planner
                       ex.what());
       }
       if (correct_msg){
-            GLOBAL_GOAL[agent_idx] = coordToCBS(msg->pose);
+          RCLCPP_INFO(this->get_logger(), "Got goal for agent: %s",agent_name);
+          GLOBAL_GOAL[agent_idx] = coordToCBS(msg->pose);
         } else {
             RCLCPP_ERROR(this->get_logger(), "Error in parsing Goal Pose message: %s",
-                        frame_header);
+                        agent_name);
         }
     }
 

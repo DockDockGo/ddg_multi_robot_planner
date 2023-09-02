@@ -143,6 +143,7 @@ namespace multi_robot_planner
 
         std::vector<rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr> agents_pub_path;
         std::vector<rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr> agents_sub_pose;
+        std::vector<rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr> agents_sub_target_goal_pose;
         std::vector<int> at_goal_wait;
         std::vector<bool> trip_directions;
         rclcpp::TimerBase::SharedPtr timer_;
