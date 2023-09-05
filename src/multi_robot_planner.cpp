@@ -355,6 +355,7 @@ namespace multi_robot_planner
       if (correct_msg){
           RCLCPP_INFO(this->get_logger(), "Got goal for agent: %s",agent_name);
           GLOBAL_GOAL[agent_idx] = coordToCBS(msg->pose);
+          robot_path[agent_idx].clear();
         } else {
             RCLCPP_ERROR(this->get_logger(), "Error in parsing Goal Pose message: %s",
                         agent_name);
