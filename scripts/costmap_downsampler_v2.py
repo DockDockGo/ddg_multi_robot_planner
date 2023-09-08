@@ -156,10 +156,10 @@ class MapDownSampler:
 
 if __name__ == "__main__":
     map_downsampler = MapDownSampler(
-        # map_file_path="/home/vineet/mfi_maps/Sept1",
-        # map_name="real_map",
-        map_file_path="/home/vineet/mfi_maps/svd_demo_final",
-        map_name="svd_demo",
+        map_file_path="/home/vineet/mfi_maps/Sept1",
+        map_name="real_map",
+        # map_file_path="/home/vineet/mfi_maps/svd_demo_final",
+        # map_name="svd_demo",
         robot_footprint=0.6,  # 0.5 meters,
     )
 
