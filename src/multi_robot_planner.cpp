@@ -419,7 +419,7 @@ void MultiRobotPlanner::RobotPoseCallback(
     robot_curr_poses[agent_idx].position.x = msg->pose.pose.position.x;
     robot_curr_poses[agent_idx].position.y = msg->pose.pose.position.y;
 
-    return;
+    // return;
 
     if (twoPoseDist(robot_curr_poses[agent_idx], robot_waypoints[agent_idx]) <
         EPS) {
@@ -501,9 +501,13 @@ AgentState MultiRobotPlanner::coordToCBS(geometry_msgs::msg::Pose robot_pose) {
 
   // robot_state.first = (int)round(7.5 - 2 * robot_pose.position.y);
   // robot_state.second = (int)round(7.5 + 2 * robot_pose.position.x);
-  float x_offset = 4.8;
-  float y_offset = -6.0;
-  float scale = 0.60;
+  // float x_offset = 5.4;
+  // float y_offset = -4.8;
+
+  float x_offset = 5.28;
+  float y_offset = -4.72;
+
+  float scale = 0.66;
 
   RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "The robot pose is: (%f, %f)",
               robot_pose.position.x, robot_pose.position.y);
@@ -526,9 +530,12 @@ geometry_msgs::msg::Pose MultiRobotPlanner::coordToGazebo(
   // agent_pose.position.x = 0.5 * agent_state.second - 3.75;
   // agent_pose.position.y = -0.5 * agent_state.first + 3.75;
 
-  float x_offset = 4.8;
-  float y_offset = -6.0;
-  float scale = 0.60;
+  // float x_offset = 5.4;
+  // float y_offset = -4.8;
+  float x_offset = 5.28;
+  float y_offset = -4.72;
+
+  float scale = 0.66;
   RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "The agent state is: (%d, %d)",
               agent_state.first, agent_state.second);
 
