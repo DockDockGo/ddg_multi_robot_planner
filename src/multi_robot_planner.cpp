@@ -180,8 +180,15 @@ bool MultiRobotPlanner::Initialize() {
   GLOBAL_GOAL.push_back(tmp_state);
   next_round_goal.push_back(tmp_state);
 
+  // instance_ptr = std::make_shared<Instance>(
+  //     "./src/ddg_multi_robot_planner/maps/svddemo-14-44-2.map");
+
   instance_ptr = std::make_shared<Instance>(
-      "./src/ddg_multi_robot_planner/maps/svddemo-14-44-2.map");
+      "./src/ddg_multi_robot_planner/maps/downsampled-map/"
+      "svd_demo-downsampled.map");
+
+  // instance_ptr = std::make_shared<Instance>(_map_file_name);
+
   instance_ptr->updateAgents(_agentNum, agent_start_states, agent_goal_states);
   instance_ptr->printMap();
   // instance.printAgents();
@@ -411,6 +418,9 @@ void MultiRobotPlanner::RobotPoseCallback(
   if (correct_msg) {
     robot_curr_poses[agent_idx].position.x = msg->pose.pose.position.x;
     robot_curr_poses[agent_idx].position.y = msg->pose.pose.position.y;
+
+    return;
+
     if (twoPoseDist(robot_curr_poses[agent_idx], robot_waypoints[agent_idx]) <
         EPS) {
       if (robots_paths[agent_idx].empty()) {
@@ -488,16 +498,46 @@ void MultiRobotPlanner::publishWaypoint(geometry_msgs::msg::Pose &waypoint,
 AgentState MultiRobotPlanner::coordToCBS(geometry_msgs::msg::Pose robot_pose) {
   // TODO @VineetTambe ask Jingtian how was this transform calculateds
   AgentState robot_state;
-  robot_state.first = (int)round(7.5 - 2 * robot_pose.position.y);
-  robot_state.second = (int)round(7.5 + 2 * robot_pose.position.x);
+
+  // robot_state.first = (int)round(7.5 - 2 * robot_pose.position.y);
+  // robot_state.second = (int)round(7.5 + 2 * robot_pose.position.x);
+  float x_offset = 4.2;
+  float y_offset = -5.4;
+  float scale = 0.60;
+
+  RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "The robot pose is: (%f, %f)",
+              robot_pose.position.x, robot_pose.position.y);
+
+  robot_state.first =
+      (int)round(-1.0 * (robot_pose.position.y + y_offset) / scale);
+
+  robot_state.second = (int)round((robot_pose.position.x + x_offset) / scale);
+
+  RCLCPP_INFO(rclcpp::get_logger("rclcpp"),
+              "The calculated robot state is: (%d, %d)", robot_state.first,
+              robot_state.second);
+
   return robot_state;
 }
 
 geometry_msgs::msg::Pose MultiRobotPlanner::coordToGazebo(
     AgentState &agent_state) {
   geometry_msgs::msg::Pose agent_pose;
-  agent_pose.position.x = 0.5 * agent_state.second - 3.75;
-  agent_pose.position.y = -0.5 * agent_state.first + 3.75;
+  // agent_pose.position.x = 0.5 * agent_state.second - 3.75;
+  // agent_pose.position.y = -0.5 * agent_state.first + 3.75;
+
+  float x_offset = 4.2;
+  float y_offset = -5.4;
+  float scale = 0.60;
+  RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "The agent state is: (%d, %d)",
+              agent_state.first, agent_state.second);
+
+  agent_pose.position.x = -1.0 * scale * agent_state.second - y_offset;
+  agent_pose.position.y = scale * agent_state.first - x_offset;
+  RCLCPP_INFO(rclcpp::get_logger("rclcpp"),
+              "Calculated agent pose is: (%f, %f)", agent_pose.position.x,
+              agent_pose.position.y);
+
   return agent_pose;
 }
 
