@@ -180,12 +180,12 @@ bool MultiRobotPlanner::Initialize() {
   GLOBAL_GOAL.push_back(tmp_state);
   next_round_goal.push_back(tmp_state);
 
-  // instance_ptr = std::make_shared<Instance>(
-  //     "./src/ddg_multi_robot_planner/maps/svddemo-14-44-2.map");
-
   instance_ptr = std::make_shared<Instance>(
-      "./src/ddg_multi_robot_planner/maps/downsampled-map/"
-      "svd_demo-downsampled.map");
+      "./src/ddg_multi_robot_planner/maps/svddemo-14-44-2.map");
+
+  // instance_ptr = std::make_shared<Instance>(
+  //     "./src/ddg_multi_robot_planner/maps/downsampled-map/"
+  //     "svd_demo-downsampled.map");
 
   // instance_ptr = std::make_shared<Instance>(_map_file_name);
 
@@ -499,11 +499,12 @@ AgentState MultiRobotPlanner::coordToCBS(geometry_msgs::msg::Pose robot_pose) {
   // TODO @VineetTambe ask Jingtian how was this transform calculateds
   AgentState robot_state;
 
-  // robot_state.first = (int)round(7.5 - 2 * robot_pose.position.y);
-  // robot_state.second = (int)round(7.5 + 2 * robot_pose.position.x);
+  robot_state.first = (int)round(7.5 - 2 * robot_pose.position.y);
+  robot_state.second = (int)round(7.5 + 2 * robot_pose.position.x);
   // float x_offset = 5.4;
   // float y_offset = -4.8;
 
+  /*
   float x_offset = 5.28;
   float y_offset = -4.72;
 
@@ -520,15 +521,17 @@ AgentState MultiRobotPlanner::coordToCBS(geometry_msgs::msg::Pose robot_pose) {
   RCLCPP_INFO(rclcpp::get_logger("rclcpp"),
               "The calculated robot state is: (%d, %d)", robot_state.first,
               robot_state.second);
-
+  */
   return robot_state;
 }
 
 geometry_msgs::msg::Pose MultiRobotPlanner::coordToGazebo(
     AgentState &agent_state) {
   geometry_msgs::msg::Pose agent_pose;
-  // agent_pose.position.x = 0.5 * agent_state.second - 3.75;
-  // agent_pose.position.y = -0.5 * agent_state.first + 3.75;
+  agent_pose.position.x = 0.5 * agent_state.second - 3.75;
+  agent_pose.position.y = -0.5 * agent_state.first + 3.75;
+
+  /*
 
   // float x_offset = 5.4;
   // float y_offset = -4.8;
@@ -544,7 +547,7 @@ geometry_msgs::msg::Pose MultiRobotPlanner::coordToGazebo(
   RCLCPP_INFO(rclcpp::get_logger("rclcpp"),
               "Calculated agent pose is: (%f, %f)", agent_pose.position.x,
               agent_pose.position.y);
-
+  */
   return agent_pose;
 }
 
