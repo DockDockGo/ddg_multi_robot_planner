@@ -231,6 +231,7 @@ void MultiRobotPlanner::timer_callback() {
       std::pair<int, int> next_tmp_state = coordToCBS(next_tmp_pose);
       next_round_start[i] = next_tmp_state;
       next_round_goal[i] = GLOBAL_GOAL[i];
+      GLOBAL_START[i] = next_tmp_state;
       // agent_finish_count++;
 
       // if (!trip_directions[i]) {
@@ -379,7 +380,9 @@ void MultiRobotPlanner::RobotGoalPoseCallback(
   if (correct_msg) {
     RCLCPP_INFO(this->get_logger(), "Got goal for agent: %s", agent_name);
     GLOBAL_GOAL[agent_idx] = coordToCBS(msg->pose);
-    robots_paths[agent_idx].clear();
+    for (int i = 0; i < _agentNum; i++) {
+      robots_paths[i].clear();
+    }
   } else {
     RCLCPP_ERROR(this->get_logger(), "Error in parsing Goal Pose message: %s",
                  agent_name);
@@ -789,65 +792,67 @@ void MultiRobotPlanner::handle_response(
 
 void MultiRobotPlanner::callCBS(std::vector<StatePath> &planned_paths) {
   RCLCPP_INFO(this->get_logger(), "Running the cbs solver");
+  try {
+    //////////////////////////////////////////////////////////////////////
+    /// run
+    //////////////////////////////////////////////////////////////////////
 
-  //////////////////////////////////////////////////////////////////////
-  /// run
-  //////////////////////////////////////////////////////////////////////
+    // TODO@Jingtian update the instance every time calls this function
+    // instance_ptr->updateAgents(_agentNum, agent_start_states,
+    // agent_goal_states);
 
-  // TODO@Jingtian update the instance every time calls this function
-  // instance_ptr->updateAgents(_agentNum, agent_start_states,
-  // agent_goal_states);
+    CBS cbs(*instance_ptr, _use_sipp, 0);
+    cbs.setPrioritizeConflicts(_prioritizingConflicts);
+    cbs.setDisjointSplitting(_disjointSplitting);
+    cbs.setBypass(_bypass);
+    cbs.setRectangleReasoning(_rectangleReasoning);
+    cbs.setCorridorReasoning(_corridorReasoning);
+    cbs.setHeuristicType(_heuristics);
+    cbs.setTargetReasoning(_targetReasoning);
+    cbs.setMutexReasoning(_mutexReasoning);
+    cbs.setSavingStats(_saving_stats);
+    cbs.setNodeLimit(_nodeLimit);
 
-  CBS cbs(*instance_ptr, _use_sipp, 0);
-  cbs.setPrioritizeConflicts(_prioritizingConflicts);
-  cbs.setDisjointSplitting(_disjointSplitting);
-  cbs.setBypass(_bypass);
-  cbs.setRectangleReasoning(_rectangleReasoning);
-  cbs.setCorridorReasoning(_corridorReasoning);
-  cbs.setHeuristicType(_heuristics);
-  cbs.setTargetReasoning(_targetReasoning);
-  cbs.setMutexReasoning(_mutexReasoning);
-  cbs.setSavingStats(_saving_stats);
-  cbs.setNodeLimit(_nodeLimit);
+    double runtime = 0;
+    int min_f_val = 0;
+    for (int i = 0; i < _max_runs; i++) {
+      cbs.clear();
+      cbs.solve(_cutoffTime, min_f_val);
+      runtime += cbs.runtime;
+      if (cbs.solution_found) break;
+      min_f_val = (int)cbs.min_f_val;
+      cbs.randomRoot = true;
+    }
+    cbs.runtime = runtime;
 
-  double runtime = 0;
-  int min_f_val = 0;
-  for (int i = 0; i < _max_runs; i++) {
-    cbs.clear();
-    cbs.solve(_cutoffTime, min_f_val);
-    runtime += cbs.runtime;
-    if (cbs.solution_found) break;
-    min_f_val = (int)cbs.min_f_val;
-    cbs.randomRoot = true;
+    //////////////////////////////////////////////////////////////////////
+    /// write results to files
+    //////////////////////////////////////////////////////////////////////
+    if (cbs.solution_found) {
+      //   RCLCPP_INFO(this->get_logger(), "Succesfully found a path! Saving it
+      //   to file");
+
+      // TODO Replace this with a function to get paths from cbs
+      cbs.getSolvedPaths(planned_paths);
+      cbs.clearSearchEngines();
+    } else {
+      RCLCPP_ERROR(this->get_logger(), "Failed to find a path!");
+    }
+    // // load paths and return them
+    // // std::vector<nav_msgs::msg::Path> planned_paths;
+    // if (readPlannedPathFromFile(_planned_path_file_name, planned_paths))
+    // {
+    //   RCLCPP_INFO(this->get_logger(), "Successfully read planned path from
+    //   file"); RCLCPP_INFO(this->get_logger(), "Yay!");
+    //   // TODO publish the planned paths
+    //   // return;
+    // } else {
+    //   RCLCPP_ERROR(this->get_logger(), "Failed to read planned path from
+    //   file!");
+    // }
+  } catch (const std::exception &ex) {
+    RCLCPP_ERROR(this->get_logger(), "Error in cbs solve: %s", ex.what());
   }
-  cbs.runtime = runtime;
-
-  //////////////////////////////////////////////////////////////////////
-  /// write results to files
-  //////////////////////////////////////////////////////////////////////
-  if (cbs.solution_found) {
-    //   RCLCPP_INFO(this->get_logger(), "Succesfully found a path! Saving it to
-    //   file");
-
-    // TODO Replace this with a function to get paths from cbs
-    cbs.getSolvedPaths(planned_paths);
-  } else {
-    RCLCPP_ERROR(this->get_logger(), "Failed to find a path!");
-  }
-  cbs.clearSearchEngines();
-
-  // // load paths and return them
-  // // std::vector<nav_msgs::msg::Path> planned_paths;
-  // if (readPlannedPathFromFile(_planned_path_file_name, planned_paths))
-  // {
-  //   RCLCPP_INFO(this->get_logger(), "Successfully read planned path from
-  //   file"); RCLCPP_INFO(this->get_logger(), "Yay!");
-  //   // TODO publish the planned paths
-  //   // return;
-  // } else {
-  //   RCLCPP_ERROR(this->get_logger(), "Failed to read planned path from
-  //   file!");
-  // }
 }
 
 // Function to read line from a text file and store coordinates in an array

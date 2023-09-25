@@ -38,7 +38,7 @@ using namespace std::chrono_literals;
 
 #define AHEAD_TIME 0
 #define EPS 0.8
-#define WAITSTEP 10
+#define WAITSTEP 2
 
 // struct AgentState{
 //     int x;
