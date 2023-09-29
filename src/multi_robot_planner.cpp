@@ -8,7 +8,7 @@ namespace multi_robot_planner {
 MultiRobotPlanner::MultiRobotPlanner() : Node("multi_robot_planner_node") {
   clock_ = get_clock();
 
-  publisher_ = this->create_publisher<std_msgs::msg::String>("topic", 10);
+  // publisher_ = this->create_publisher<std_msgs::msg::String>("topic", 10);
   timer_ = this->create_wall_timer(
       1500ms, std::bind(&MultiRobotPlanner::timer_callback, this));
 
@@ -258,10 +258,10 @@ void MultiRobotPlanner::timer_callback() {
   instance_ptr->updateGoals(next_round_goal);
   callCBS(planned_paths);
   updateRobotPlan(planned_paths);
-  PublishMarker();
-  for (unsigned int i = 0; i < _agentNum; i++) {
-    PublishCBSPath(i, planned_paths[i]);
-  }
+  // PublishMarker();
+  // for (unsigned int i = 0; i < _agentNum; i++) {
+  //   PublishCBSPath(i, planned_paths[i]);
+  // }
 }
 
 void MultiRobotPlanner::PublishMarker() {
@@ -342,6 +342,21 @@ void MultiRobotPlanner::PublishCBSPath(int agent_idx, StatePath &agent_path) {
   agents_pub_path[agent_idx]->publish(pose_path);
 }
 
+void MultiRobotPlanner::PublishCBSPathConverted(
+    int agent_idx, std::deque<geometry_msgs::msg::Pose> &path) {
+  nav_msgs::msg::Path pose_path;
+  pose_path.header.frame_id = "map";
+  pose_path.header.stamp = clock_->now();
+  for (auto pose : path) {
+    geometry_msgs::msg::PoseStamped tmp_pose;
+    tmp_pose.pose = pose;
+    tmp_pose.header.frame_id = "map";
+    tmp_pose.header.stamp = clock_->now();
+    pose_path.poses.push_back(tmp_pose);
+  }
+  agents_pub_path[agent_idx]->publish(pose_path);
+}
+
 void MultiRobotPlanner::printStatePath(StatePath agent_path) {
   // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "The path for agent is: %d", i);
   for (auto entry : agent_path) {
@@ -383,6 +398,7 @@ void MultiRobotPlanner::RobotGoalPoseCallback(
     for (int i = 0; i < _agentNum; i++) {
       robots_paths[i].clear();
     }
+    // timer_callback();
   } else {
     RCLCPP_ERROR(this->get_logger(), "Error in parsing Goal Pose message: %s",
                  agent_name);
@@ -449,6 +465,10 @@ void MultiRobotPlanner::RobotPoseCallback(
       ;
     }
     publishWaypoint(robot_waypoints[agent_idx], agent_idx);
+    PublishMarker();
+    for (unsigned int i = 0; i < _agentNum; i++) {
+      PublishCBSPathConverted(i, robots_paths[i]);
+    }
   } else {
     RCLCPP_ERROR(this->get_logger(), "Error in parsing odometry: %s",
                  frame_header);
@@ -850,8 +870,8 @@ void MultiRobotPlanner::callCBS(std::vector<StatePath> &planned_paths) {
     //   RCLCPP_ERROR(this->get_logger(), "Failed to read planned path from
     //   file!");
     // }
-  } catch (const std::exception &ex) {
-    RCLCPP_ERROR(this->get_logger(), "Error in cbs solve: %s", ex.what());
+  } catch (...) {
+    RCLCPP_ERROR(this->get_logger(), "Error in cbs solve!");
   }
 }
 

@@ -37,7 +37,7 @@ using namespace std::chrono_literals;
 #define PosePath std::vector<geometry_msgs::msg::Pose>
 
 #define AHEAD_TIME 0
-#define EPS 0.8
+#define EPS 0.70
 #define WAITSTEP 2
 
 // struct AgentState{
@@ -116,6 +116,8 @@ class MultiRobotPlanner : public rclcpp::Node {
       const geometry_msgs::msg::PoseStamped::SharedPtr msg);
   bool updateRobotPlan(std::vector<StatePath> &robot_state_paths);
   void PublishCBSPath(int agent_idx, StatePath &agent_path);
+  void PublishCBSPathConverted(
+      int agent_idx, std::deque<geometry_msgs::msg::Pose> &agent_path);
   void PublishSingleMarker(int agent_idx, std::string marker_type);
   void PublishMarker();
 
@@ -233,6 +235,8 @@ class MultiRobotPlanner : public rclcpp::Node {
   int _nodeLimit = MAX_NODES;
 
   double _cutoffTime = 60.0;  // cutoff time in seconds | default 60.0
+
+  bool goal_received = false;
 };
 
 }  // namespace multi_robot_planner
