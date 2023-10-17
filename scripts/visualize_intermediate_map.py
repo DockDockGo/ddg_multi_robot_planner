@@ -32,15 +32,15 @@ import matplotlib.pyplot as plt
 
 def load_map_from_file(file_path):
     matrix = []
-    with open(file_path, 'r') as file:
+    with open(file_path, "r") as file:
         cnt = 0
         for line in file:
             if cnt < 4:
                 cnt += 1
                 print(line)
-                if line.split()[0] == 'height':
+                if line.split()[0] == "height":
                     height = int(line.split()[1])
-                if line.split()[0] == 'width':
+                if line.split()[0] == "width":
                     width = int(line.split()[1])
                 continue
             row = [ord(char) for char in line]
@@ -54,6 +54,7 @@ def load_map_from_file(file_path):
     return ret
     # return np.zeros((10,10))
 
+
 def visualize_map(file_path):
     # Load the map data from the file
     map_data = load_map_from_file(file_path)
@@ -62,15 +63,16 @@ def visualize_map(file_path):
     fig, ax = plt.subplots()
 
     # Display the map data
-    ax.imshow(map_data, cmap='gray', origin='lower')
+    ax.imshow(map_data, cmap="gray", origin="lower")
 
     # Add labels and title
-    ax.set_xlabel('X')
-    ax.set_ylabel('Y')
-    ax.set_title('Occupancy Grid Map')
+    ax.set_xlabel("X")
+    ax.set_ylabel("Y")
+    ax.set_title("Occupancy Grid Map")
 
     # Show the plot
     plt.show()
+
 
 # Specify the path to the map file
 file_path = "../maps/svd_demo-parsed-map.txt"

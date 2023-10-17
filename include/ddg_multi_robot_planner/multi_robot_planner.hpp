@@ -76,8 +76,7 @@ class MultiRobotPlanner : public rclcpp::Node {
   bool getRobotPose(std::string &robot_namespace,
                     geometry_msgs::msg::PoseStamped &robot_pose);
   // Plan paths for all robots
-  bool planPaths(std::vector<std::string> &robot_namespaces,
-                 std::vector<geometry_msgs::msg::Pose> &robot_start_poses,
+  bool planPaths(std::vector<geometry_msgs::msg::Pose> &robot_start_poses,
                  std::vector<geometry_msgs::msg::Pose> &robot_goal_poses,
                  std::vector<nav_msgs::msg::Path> &planned_paths);
   void convertPathToPosePath(StatePath &state_path, PosePath &pose_path);

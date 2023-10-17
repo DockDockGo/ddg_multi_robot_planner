@@ -111,18 +111,17 @@ MultiRobotPlanner::MultiRobotPlanner() : Node("multi_robot_planner_node") {
   //                   std::placeholders::_1));
 
   // // create a ros2 service call to call planPaths
-  // get_multi_plan_service_ =
-  //     create_service<ddg_multi_robot_srvs::srv::GetMultiPlan>(
-  //         "/multi_robot_planner/get_plan",
-  //         [this](
-  //             const std::shared_ptr<
-  //                 ddg_multi_robot_srvs::srv::GetMultiPlan::Request>
-  //                 request,
-  //             std::shared_ptr<ddg_multi_robot_srvs::srv::GetMultiPlan::Response>
-  //                 response)
-  //         {
-  //           handleGetMultiPlanServiceRequest(request, response);
-  //         });
+  get_multi_plan_service_ =
+      create_service<ddg_multi_robot_srvs::srv::GetMultiPlan>(
+          "/cbs/plan_paths",
+          [this](
+              const std::shared_ptr<
+                  ddg_multi_robot_srvs::srv::GetMultiPlan::Request>
+                  request,
+              std::shared_ptr<ddg_multi_robot_srvs::srv::GetMultiPlan::Response>
+                  response) {
+            handleGetMultiPlanServiceRequest(request, response);
+          });
 
   // // create a ros2 service call to call updateNamespaces
   // // integrate ros2 params from launch files to get the robotnamespaces
@@ -545,7 +544,42 @@ AgentState MultiRobotPlanner::coordToCBS(geometry_msgs::msg::Pose robot_pose) {
               "The calculated robot state is: (%d, %d)", robot_state.first,
               robot_state.second);
   */
+
+  robot_state = validCBSState(robot_state);
+
   return robot_state;
+}
+
+AgentState validCBSState(AgentState state) {
+  if (state.first >= 0 && state.first < instance_ptr->num_of_rows &&
+      state.second >= 0 && state.second < instance_ptr->num_of_cols) {
+    if (!instance_ptr->isObstacle(
+            instance_ptr->linearizeCoordinate(state.first, state.second))) {
+      return state;
+    }
+  }
+
+  int tmp_idx = 1;
+  while (true) {
+    for (int i = -1 * tmp_idx; i <= tmp_idx; i++) {
+      for (int j = -1 * tmp_idx; j <= tmp_idx; j++) {
+        int tmp_row = state.first + i;
+        int tmp_col = state.second + j;
+        if (tmp_row >= 0 && tmp_row < instance_ptr->num_of_rows &&
+            tmp_col >= 0 && tmp_col < instance_ptr->num_of_cols) {
+          if (!instance_ptr->isObstacle(
+                  instance_ptr->linearizeCoordinate(tmp_row, tmp_col))) {
+            state.first = tmp_row;
+            state.second = tmp_col;
+            return state;
+          }
+        }
+      }
+    }
+    tmp_idx++;
+  }
+
+  return state;
 }
 
 geometry_msgs::msg::Pose MultiRobotPlanner::coordToGazebo(
@@ -1070,13 +1104,39 @@ bool MultiRobotPlanner::createAgentScenarioFile(
 }
 
 bool MultiRobotPlanner::planPaths(
-    std::vector<std::string> &robot_namespaces,
     std::vector<geometry_msgs::msg::Pose> &robot_start_poses,
     std::vector<geometry_msgs::msg::Pose> &robot_goal_poses,
     std::vector<nav_msgs::msg::Path> &planned_paths) {
-  updateMap();
-  // std::vector<nav_msgs::msg::Path> planned_paths;
-  // publishPlannedPaths(planned_paths);
+  // updateMap();
+  int tmp_agent_num = robot_start_poses.size();
+  std::vector<AgentState> tmp_agent_goal_states;
+  std::vector<AgentState> tmp_agent_start_states;
+
+  for (int i = 0; i < tmp_agent_num; i++) {
+    tmp_agent_start_states.push_back(coordToCBS(robot_start_poses[i]));
+    tmp_agent_goal_states.push_back(coordToCBS(robot_goal_poses[i]));
+  }
+
+  instance_ptr->updateAgents(tmp_agent_num, agent_start_states,
+                             agent_goal_states);
+  instance_ptr->printMap();
+
+  std::vector<StatePath> planned_paths;
+  callCBS(planned_paths);
+
+  std::vector<nav_msgs::msg::Path> planned_paths;
+
+  for (int i = 0; i < tmp_agent_num; i++) {
+    nav_msgs::msg::Path tmp_pose_path;
+    tmp_pose_path.header.frame_id = "robot" + std::to_string(i);
+    for (auto state_pose : planned_paths[i]) {
+      geometry_msgs::msg::PoseStamped tmp_robot_pose;
+      tmp_robot_pose.header.frame_id = "map";
+      tmp_robot_pose.pose = coordToGazebo(state_pose);
+      tmp_pose_path.poses.push_back(tmp_robot_pose);
+    }
+    planned_paths.push_back(tmp_pose_path);
+  }
 
   return true;
 }
@@ -1103,8 +1163,8 @@ void MultiRobotPlanner::handleGetMultiPlanServiceRequest(
     std::shared_ptr<ddg_multi_robot_srvs::srv::GetMultiPlan::Response>
         response) {
   try {
-    response->success = planPaths(request->robot_namespaces, request->start,
-                                  request->goal, response->plan);
+    response->success =
+        planPaths(request->start, request->goal, response->plan);
     response->robot_namespaces = request->robot_namespaces;
   } catch (const std::exception &ex) {
     // Handle the exception
@@ -1122,31 +1182,6 @@ int main(int argc, char *argv[]) {
   rclcpp::init(argc, argv);
   rclcpp::spin(std::make_shared<multi_robot_planner::MultiRobotPlanner>());
 
-  // crete a service call to get paths for n robots -> service call.
-  /** Service call accepts the following arguments:
-  0. get the map                      [x]
-  1. start position of the robot      [x]
-  2. goal postion of the robot        [x]
-  3. robot namespaces                 [x]
-
-  Service call returns the following:
-  1. A hashmap of posestamped messages with pose for each robot.
-  */
-
-  // TODO call this service call from multi-navigator node.
-
-  /**
-   * Todo @ Jingtian
-   * 1. Write and read file with start and goal location for agents        [x]
-   * 2. Initialize the instance                                            [x]
-   * 3. Subscribe to the robot pose and pushlish next goal                 [x]
-   * 4. Call CBS planner and the path                                      [x]
-   * 5. Map allignment, from coordinate of Gazebo to gridmap               [x]
-   * 6. Transform the state path, and pub the next state                   [x]
-   * 7. Figure out the orientation problem                                 [ ]
-   **/
-
-  // Shutdown ROS2
   rclcpp::shutdown();
   return 0;
 }
