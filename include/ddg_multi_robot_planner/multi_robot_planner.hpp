@@ -6,6 +6,7 @@
 #include <tf2_ros/transform_listener.h>
 
 #include <geometry_msgs/msg/pose_stamped.hpp>
+#include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <nav_msgs/srv/get_map.hpp>
@@ -76,14 +77,19 @@ class MultiRobotPlanner : public rclcpp::Node {
   bool getRobotPose(std::string &robot_namespace,
                     geometry_msgs::msg::PoseStamped &robot_pose);
   // Plan paths for all robots
-  bool planPaths(std::vector<std::string> &robot_namespaces,
-                 std::vector<geometry_msgs::msg::Pose> &robot_start_poses,
-                 std::vector<geometry_msgs::msg::Pose> &robot_goal_poses,
-                 std::vector<nav_msgs::msg::Path> &planned_paths);
+  bool planPaths(
+      // std::vector<std::string> &robot_namespaces,
+      std::vector<geometry_msgs::msg::PoseStamped> &robot_start_poses,
+      std::vector<geometry_msgs::msg::PoseStamped> &robot_goal_poses,
+      std::vector<nav_msgs::msg::Path> &planned_paths);
   void convertPathToPosePath(StatePath &state_path, PosePath &pose_path);
   bool Initialize();
   AgentState coordToCBS(geometry_msgs::msg::Pose robot_pose);
   geometry_msgs::msg::Pose coordToGazebo(AgentState &agent_state);
+
+  void worldToDownsampledMap(double wx, double wy, int &mx, int &my) const;
+  void downsampledMapToWorld(int mx, int my, double &wx, double &wy) const;
+
   void callCBS(std::vector<StatePath> &planned_paths);
   void printStatePath(StatePath agent_path);
   void printPosePath(PosePath robot_path);
@@ -111,7 +117,10 @@ class MultiRobotPlanner : public rclcpp::Node {
   void publishPlannedPaths(std::vector<nav_msgs::msg::Path> &planned_paths);
   void publishPlannedPaths(std::vector<std::pair<int, int>> &planned_paths);
   void timer_callback();
-  void RobotPoseCallback(const nav_msgs::msg::Odometry::SharedPtr msg);
+  //   void RobotPoseCallback(const nav_msgs::msg::Odometry::SharedPtr msg);
+  //   void RobotPoseCallback(
+  //       const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr msg);
+  void RobotPoseCallback();
   void RobotGoalPoseCallback(
       const geometry_msgs::msg::PoseStamped::SharedPtr msg);
   bool updateRobotPlan(std::vector<StatePath> &robot_state_paths);
@@ -152,13 +161,18 @@ class MultiRobotPlanner : public rclcpp::Node {
 
   std::vector<rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr>
       agents_pub_path;
-  std::vector<rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr>
+  //   std::vector<rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr>
+  //       agents_sub_pose;
+
+  std::vector<rclcpp::Subscription<
+      geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr>
       agents_sub_pose;
   std::vector<rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr>
       agents_sub_target_goal_pose;
   std::vector<int> at_goal_wait;
   std::vector<bool> trip_directions;
   rclcpp::TimerBase::SharedPtr timer_;
+  rclcpp::TimerBase::SharedPtr robot_pose_timer_;
 
   std::vector<std::pair<int, int>> next_round_goal;
   std::vector<std::pair<int, int>> next_round_start;
@@ -233,6 +247,12 @@ class MultiRobotPlanner : public rclcpp::Node {
   int _nodeLimit = MAX_NODES;
 
   double _cutoffTime = 60.0;  // cutoff time in seconds | default 60.0
+
+  double orignal_map_resolution = 0.05;          // every cell is 0.05m
+  std::vector<double> origin_ = {-3.96, -3.26};  // origin of the original map
+  std::vector<int> original_map_size_ = {443,
+                                         149};  // origin of the original map
+  double downsampling_factor = 5.0;
 };
 
 }  // namespace multi_robot_planner
