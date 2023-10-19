@@ -87,9 +87,6 @@ class MultiRobotPlanner : public rclcpp::Node {
   AgentState coordToCBS(geometry_msgs::msg::Pose robot_pose);
   geometry_msgs::msg::Pose coordToGazebo(AgentState &agent_state);
 
-  void worldToDownsampledMap(double wx, double wy, int &mx, int &my) const;
-  void downsampledMapToWorld(int mx, int my, double &wx, double &wy) const;
-
   void callCBS(std::vector<StatePath> &planned_paths);
   void printStatePath(StatePath agent_path);
   void printPosePath(PosePath robot_path);
@@ -190,6 +187,10 @@ class MultiRobotPlanner : public rclcpp::Node {
   // Map update subscriber
   rclcpp::Subscription<nav_msgs::msg::OccupancyGrid>::SharedPtr
       map_update_subscriber;
+
+  rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr printPoseSub;
+  void printPose(geometry_msgs::msg::PoseStamped::SharedPtr robot_state);
+
   // Map service client
   rclcpp::Client<nav_msgs::srv::GetMap>::SharedPtr get_map_srv_client;
   // Map service request
@@ -252,7 +253,7 @@ class MultiRobotPlanner : public rclcpp::Node {
   std::vector<double> origin_ = {-3.96, -3.26};  // origin of the original map
   std::vector<int> original_map_size_ = {443,
                                          149};  // origin of the original map
-  double downsampling_factor = 5.0;
+  double downsampling_factor = 10.0;            // downsampling factor of 10
 };
 
 }  // namespace multi_robot_planner

@@ -17,6 +17,10 @@ MultiRobotPlanner::MultiRobotPlanner() : Node("multi_robot_planner_node") {
   RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"),
                      "Start multi robot planner!");
 
+  printPoseSub = this->create_subscription<geometry_msgs::msg::PoseStamped>(
+      "/test_pose", 10,
+      std::bind(&MultiRobotPlanner::printPose, this, std::placeholders::_1));
+
   for (int i = 0; i < _agentNum; i++) {
     std::string tmp_robot_name = "robot" + std::to_string(i);
     robot_namespaces.push_back(tmp_robot_name);
@@ -146,6 +150,14 @@ bool MultiRobotPlanner::Initialize() {
   // This is just dummy code for testing -> replace this with the actual robot
   // pose test code
   geometry_msgs::msg::Pose tempPose;
+
+  instance_ptr = std::make_shared<Instance>(
+      "./src/ddg_multi_robot_planner/maps/svddemo-14-44-2.map");
+
+  // instance_ptr = std::make_shared<Instance>(
+  //     "./src/ddg_multi_robot_planner/maps/downsampled-map/"
+  //     "svd_demo-downsampled.map");
+
   AgentState tmp_state;
   tempPose.position.x = 0.25;
   tempPose.position.y = -0.75;
@@ -191,15 +203,12 @@ bool MultiRobotPlanner::Initialize() {
   GLOBAL_GOAL.push_back(tmp_state);
   next_round_goal.push_back(tmp_state);
 
-  instance_ptr = std::make_shared<Instance>(
-      "./src/ddg_multi_robot_planner/maps/svddemo-14-44-2.map");
-
   // instance_ptr = std::make_shared<Instance>(
   //     "./src/ddg_multi_robot_planner/maps/downsampled-map/"
   //     "svd_demo-downsampled.map");
 
   // instance_ptr = std::make_shared<Instance>(_map_file_name);
-
+  
   instance_ptr->updateAgents(_agentNum, agent_start_states, agent_goal_states);
   instance_ptr->printMap();
   // instance.printAgents();
@@ -564,44 +573,6 @@ void MultiRobotPlanner::publishWaypoint(geometry_msgs::msg::Pose &waypoint,
   //     agent_id, goal_pose.pose.position.x, goal_pose.pose.position.y);
 }
 
-void MultiRobotPlanner::worldToDownsampledMap(double wx, double wy, int &mx,
-                                              int &my) const {
-  // if (wx < origin_[0] || wy < origin_[1]) return false;
-
-  mx =
-      (int)((wx - origin_[0]) / (orignal_map_resolution * downsampling_factor));
-  my =
-      original_map_size_[1] -
-      (int)((wy - origin_[1]) / (orignal_map_resolution * downsampling_factor));
-
-  // if (mx < original_map_size_[0] && my < original_map_size_[1]) return true;
-  // return false;
-}
-
-void MultiRobotPlanner::downsampledMapToWorld(int mx, int my, double &wx,
-                                              double &wy) const {
-  wx = origin_[0] + (mx * downsampling_factor + 0.5) * orignal_map_resolution;
-  wy = origin_[1] + ((original_map_size_[1] - my) * downsampling_factor + 0.5) *
-                        orignal_map_resolution;
-}
-// resolution: 0.05000000074505806
-// width: 443
-// height: 149
-// origin:
-//   position:
-//     x: -3.96
-//     y: -3.26
-//     z: 0.0
-//   orientation:
-//     x: 0.0
-//     y: 0.0
-//     z: 0.0
-//     w: 1.0
-
-/**
- * TODO@Jingtian
- * transform between coordinates
- */
 AgentState MultiRobotPlanner::coordToCBS(geometry_msgs::msg::Pose robot_pose) {
   AgentState robot_state;
   //
@@ -617,28 +588,48 @@ AgentState MultiRobotPlanner::coordToCBS(geometry_msgs::msg::Pose robot_pose) {
 
   robot_state.first = (int)round(7.5 - 2 * robot_pose.position.y);
   robot_state.second = (int)round(7.5 + 2 * robot_pose.position.x);
-  // float x_offset = 5.4;
-  // float y_offset = -4.8;
+  // // float x_offset = 5.4;
+  // // float y_offset = -4.8;
 
-  /*
-  float x_offset = 5.28;
-  float y_offset = -4.72;
+  // float x_offset = 5.28;
+  // float y_offset = -4.72;
 
-  float scale = 0.66;
+  // float scale = 0.66;
 
-  RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "The robot pose is: (%f, %f)",
-              robot_pose.position.x, robot_pose.position.y);
+  // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "The robot pose is: (%f, %f)",
+  //             robot_pose.position.x, robot_pose.position.y);
+  // -1 to invert the y coordinates
+  // robot_state.first =
+  //     (int)round(-1.0 * (robot_pose.position.y + origin_[1]) /
+  //                (orignal_map_resolution * downsampling_factor));
 
-  robot_state.first =
-      (int)round(-1.0 * (robot_pose.position.y + y_offset) / scale);
+  // robot_state.second =
+  //     (int)round((robot_pose.position.x - origin_[0]) /
+  //                (orignal_map_resolution * downsampling_factor));
 
-  robot_state.second = (int)round((robot_pose.position.x + x_offset) / scale);
+  // RCLCPP_INFO(rclcpp::get_logger("rclcpp"),
+  //             "The calculated robot state is: (%d, %d)", robot_state.first,
+  //             robot_state.second);
 
-  RCLCPP_INFO(rclcpp::get_logger("rclcpp"),
-              "The calculated robot state is: (%d, %d)", robot_state.first,
-              robot_state.second);
-  */
+  try {
+    robot_state = instance_ptr->validCoord(robot_state);
+  } catch (const std::exception &ex) {
+    RCLCPP_ERROR(this->get_logger(), "Error in parsing robot pose: %s",
+                 ex.what());
+  }
+
+  // instance_ptr->printAgentTargets(robot_state);
+
   return robot_state;
+}
+
+void MultiRobotPlanner::printPose(
+    geometry_msgs::msg::PoseStamped::SharedPtr msg) {
+  AgentState robot_state;
+  robot_state.first = (int)msg->pose.position.x;
+  robot_state.second = (int)msg->pose.position.y;
+
+  instance_ptr->printAgentTargets(robot_state);
 }
 
 geometry_msgs::msg::Pose MultiRobotPlanner::coordToGazebo(
@@ -667,6 +658,19 @@ geometry_msgs::msg::Pose MultiRobotPlanner::coordToGazebo(
               "Calculated agent pose is: (%f, %f)", agent_pose.position.x,
               agent_pose.position.y);
   */
+
+  // agent_pose.position.x = (orignal_map_resolution * downsampling_factor) *
+  //                             (agent_state.second + 0.5) +
+  //                         origin_[0];
+  // agent_pose.position.y = -1.0 *
+  //                             (orignal_map_resolution * downsampling_factor)
+  //                             * (agent_state.first) -
+  //                         origin_[1];
+
+  RCLCPP_INFO(rclcpp::get_logger("rclcpp"),
+              "Calculated agent pose is: (%f, %f)", agent_pose.position.x,
+              agent_pose.position.y);
+
   return agent_pose;
 }
 
@@ -1174,6 +1178,8 @@ bool MultiRobotPlanner::planPaths(
     std::vector<geometry_msgs::msg::PoseStamped> &robot_start_poses,
     std::vector<geometry_msgs::msg::PoseStamped> &robot_goal_poses,
     std::vector<nav_msgs::msg::Path> &planned_paths) {
+  // TODO complete this service
+
   // updateMap();
   // std::vector<nav_msgs::msg::Path> planned_paths;
   // publishPlannedPaths(planned_paths);
