@@ -420,7 +420,8 @@ void MultiRobotPlanner::RobotPoseCallback() {
   // RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "Sub odom: " <<
   vector<geometry_msgs::msg::PoseStamped> robot_poses(2);
 
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), " Inside RobotPoseCallback");
+  // RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), " Inside
+  // RobotPoseCallback");
 
   try {
     for (unsigned int agent_idx = 0; agent_idx < _agentNum; agent_idx++) {
@@ -589,8 +590,8 @@ AgentState MultiRobotPlanner::coordToCBS(geometry_msgs::msg::Pose robot_pose) {
   // if (mx < original_map_size_[0] && my < original_map_size_[1]) return true;
   // return false;
 
-  robot_state.first = (int)round(7.5 - 2 * robot_pose.position.y);
-  robot_state.second = (int)round(7.5 + 2 * robot_pose.position.x);
+  // robot_state.first = (int)round(7.5 - 2 * robot_pose.position.y);
+  // robot_state.second = (int)round(7.5 + 2 * robot_pose.position.x);
   // // float x_offset = 5.4;
   // // float y_offset = -4.8;
 
@@ -602,24 +603,38 @@ AgentState MultiRobotPlanner::coordToCBS(geometry_msgs::msg::Pose robot_pose) {
   // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "The robot pose is: (%f, %f)",
   //             robot_pose.position.x, robot_pose.position.y);
   // -1 to invert the y coordinates
-  // robot_state.first =
-  //     (int)round(-1.0 * (robot_pose.position.y + origin_[1]) /
-  //                (orignal_map_resolution * downsampling_factor));
 
-  // robot_state.second =
-  //     (int)round((robot_pose.position.x - origin_[0]) /
-  //                (orignal_map_resolution * downsampling_factor));
+  robot_state.first =
+
+      (int)round((original_map_size_[1] -
+                  1 * round((robot_pose.position.y - origin_[1]) /
+                            (orignal_map_resolution))) /
+                 downsampling_factor) -
+      1;
+
+  robot_state.second = (int)round(
+      round((robot_pose.position.x - origin_[0]) / orignal_map_resolution) /
+      downsampling_factor);
+
+  // RCLCPP_INFO(rclcpp::get_logger("rclcpp"),
+  //             "The calculated robot state2 is: (%d, %d)", robot_state.first,
+  //             robot_state.second);
+
+  try {
+    robot_state = instance_ptr->validCoord(robot_state);
+    // robot_state2 = instance_ptr->validCoord(robot_state2);
+  } catch (const std::exception &ex) {
+    RCLCPP_ERROR(this->get_logger(), "Error in parsing robot pose: %s",
+                 ex.what());
+  }
 
   // RCLCPP_INFO(rclcpp::get_logger("rclcpp"),
   //             "The calculated robot state is: (%d, %d)", robot_state.first,
   //             robot_state.second);
 
-  try {
-    robot_state = instance_ptr->validCoord(robot_state);
-  } catch (const std::exception &ex) {
-    RCLCPP_ERROR(this->get_logger(), "Error in parsing robot pose: %s",
-                 ex.what());
-  }
+  // RCLCPP_INFO(rclcpp::get_logger("rclcpp"),
+  //             "The calculated robot state 2 is: (%d, %d)", robot_state2.first,
+  //             robot_state2.second);
 
   // instance_ptr->printAgentTargets(robot_state);
 
@@ -628,9 +643,18 @@ AgentState MultiRobotPlanner::coordToCBS(geometry_msgs::msg::Pose robot_pose) {
 
 void MultiRobotPlanner::printPose(
     geometry_msgs::msg::PoseStamped::SharedPtr msg) {
-  AgentState robot_state;
-  robot_state.first = (int)msg->pose.position.x;
-  robot_state.second = (int)msg->pose.position.y;
+  AgentState robot_state = coordToCBS(msg->pose);
+
+  RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "calculated pose is: (%d, %d)",
+              robot_state.first, robot_state.second);
+
+  auto pose = coordToGazebo(robot_state);
+
+  RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "decalculated pose is: (%f, %f)",
+              pose.position.x, pose.position.y);
+
+  // robot_state.first = (int)msg->pose.position.x;
+  // robot_state.second = (int)msg->pose.position.y;
 
   instance_ptr->printAgentTargets(robot_state);
 }
@@ -638,8 +662,8 @@ void MultiRobotPlanner::printPose(
 geometry_msgs::msg::Pose MultiRobotPlanner::coordToGazebo(
     AgentState &agent_state) {
   geometry_msgs::msg::Pose agent_pose;
-  agent_pose.position.x = 0.5 * agent_state.second - 3.75;
-  agent_pose.position.y = -0.5 * agent_state.first + 3.75;
+  // agent_pose.position.x = 0.5 * agent_state.second - 3.75;
+  // agent_pose.position.y = -0.5 * agent_state.first + 3.75;
 
   // downsampledMapToWorld(agent_state.second, agent_state.first,
   //                       agent_pose.position.x, agent_pose.position.y);
@@ -655,24 +679,31 @@ geometry_msgs::msg::Pose MultiRobotPlanner::coordToGazebo(
   RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "The agent state is: (%d, %d)",
               agent_state.first, agent_state.second);
 
-  agent_pose.position.x = scale * (agent_state.second) - x_offset;
-  agent_pose.position.y = -1.0 * scale * (agent_state.first) - y_offset;
-  RCLCPP_INFO(rclcpp::get_logger("rclcpp"),
-              "Calculated agent pose is: (%f, %f)", agent_pose.position.x,
-              agent_pose.position.y);
+
+  // agent_pose.position.x = scale * (agent_state.second) - x_offset;
+  // agent_pose.position.y = -1.0 * scale * (agent_state.first) - y_offset;
   */
 
-  // agent_pose.position.x = (orignal_map_resolution * downsampling_factor) *
-  //                             (agent_state.second + 0.5) +
-  //                         origin_[0];
-  // agent_pose.position.y = -1.0 *
-  //                             (orignal_map_resolution * downsampling_factor)
-  //                             * (agent_state.first) -
-  //                         origin_[1];
+  // agent_pose.position.x = 0.5 * agent_state.second - 3.75;
+  // agent_pose.position.y = -0.5 * agent_state.first + 3.75;
+  // RCLCPP_INFO(rclcpp::get_logger("rclcpp"),
+  //             "Calculated agent pose is: (%f, %f)", agent_pose.position.x,
+  //             agent_pose.position.y);
 
-  RCLCPP_INFO(rclcpp::get_logger("rclcpp"),
-              "Calculated agent pose is: (%f, %f)", agent_pose.position.x,
-              agent_pose.position.y);
+  agent_pose.position.x =
+      (orignal_map_resolution * downsampling_factor) * (agent_state.second) +
+      origin_[0];
+
+  agent_pose.position.y = -1.0 *
+                              ((agent_state.first + 1) * downsampling_factor -
+                               original_map_size_[1]) *
+                              orignal_map_resolution +
+                          origin_[1];
+  // 0.5;  // subtract 0.20 to compensate for information loss offset
+
+  // RCLCPP_INFO(rclcpp::get_logger("rclcpp"),
+  //             "Calculated agent pose UPDATED is: (%f, %f)",
+  //             agent_pose.position.x, agent_pose.position.y);
 
   return agent_pose;
 }
@@ -1091,8 +1122,8 @@ bool MultiRobotPlanner::updateRobotPlan(
 bool MultiRobotPlanner::getRobotPose(
     std::string &robot_namespace, geometry_msgs::msg::PoseStamped &robot_pose) {
   // Wait for the transformation to become available
-  RCLCPP_INFO(this->get_logger(), "Getting robot pose for agent %s!",
-              robot_namespace);
+  // RCLCPP_INFO(this->get_logger(), "Getting robot pose for agent %s!",
+  //             robot_namespace);
 
   std::string target_frame = "map";  // The frame you want the pose in
   std::string source_frame =
