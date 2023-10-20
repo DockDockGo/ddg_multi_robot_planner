@@ -208,7 +208,7 @@ bool MultiRobotPlanner::Initialize() {
   //     "svd_demo-downsampled.map");
 
   // instance_ptr = std::make_shared<Instance>(_map_file_name);
-  
+
   instance_ptr->updateAgents(_agentNum, agent_start_states, agent_goal_states);
   instance_ptr->printMap();
   // instance.printAgents();
@@ -247,11 +247,14 @@ void MultiRobotPlanner::timer_callback() {
       } else {
         at_goal_wait[i] = WAITSTEP;
       }
-      geometry_msgs::msg::Pose next_tmp_pose = robot_curr_poses[i];
-      std::pair<int, int> next_tmp_state = coordToCBS(next_tmp_pose);
-      next_round_start[i] = next_tmp_state;
+      for (int agent_idx = 0; agent_idx < _agentNum; agent_idx++) {
+        geometry_msgs::msg::Pose next_tmp_pose = robot_curr_poses[agent_idx];
+        std::pair<int, int> next_tmp_state = coordToCBS(next_tmp_pose);
+        next_round_start[agent_idx] = next_tmp_state;
+      }
       next_round_goal[i] = GLOBAL_GOAL[i];
-      GLOBAL_START[i] = next_tmp_state;
+      GLOBAL_START[i] = next_round_start[i];
+
       // agent_finish_count++;
 
       // if (!trip_directions[i]) {
