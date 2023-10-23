@@ -179,7 +179,8 @@ class MultiRobotPlanner : public rclcpp::Node {
 
   std::vector<AgentState> GLOBAL_START;
   std::vector<AgentState> GLOBAL_GOAL;
-
+  //   std::vector<geometry_msgs::msg::Pose> target_pose;
+  //   std::vector<geometry_msgs::msg::Pose> GLOBAL_GOAL_WORLD_COORD;
   // test only
   rclcpp::Publisher<std_msgs::msg::String>::SharedPtr publisher_;
   size_t count_;
@@ -247,13 +248,18 @@ class MultiRobotPlanner : public rclcpp::Node {
   bool _saving_stats = false;
   int _nodeLimit = MAX_NODES;
 
-  double _cutoffTime = 60.0;  // cutoff time in seconds | default 60.0
+  double _cutoffTime = 120.0;  // cutoff time in seconds | default 60.0
 
   double orignal_map_resolution = 0.05;          // every cell is 0.05m
   std::vector<double> origin_ = {-3.96, -3.26};  // origin of the original map
   std::vector<int> original_map_size_ = {443,
                                          149};  // origin of the original map
-  double downsampling_factor = 10.0;            // downsampling factor of 10
+  std::vector<double> offset_ = {0.2, 0.7};     // origin of the original map
+  //   double downsampling_factor = 10.0;            // downsampling factor of
+  //   10
+
+  double downsampling_factor = 20.0;  // downsampling factor of 10
+  AgentState dummy_state = {0, 0};
 };
 
 }  // namespace multi_robot_planner

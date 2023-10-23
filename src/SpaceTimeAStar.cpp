@@ -149,7 +149,7 @@ Path SpaceTimeAStar::findPath(const CBSNode& node, const ConstraintTable& initia
 				break;
 			default:
 				cerr << "CANNOT handle positive range/barrier constraints" << endl;
-				exit(-1); // TODO: proceed positive range/barrier constraints in the landmark method
+				// exit(-1); // TODO: proceed positive range/barrier constraints in the landmark method
 			}
 		}
 		assert(t_min <= t_max);

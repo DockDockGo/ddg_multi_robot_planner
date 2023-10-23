@@ -102,7 +102,9 @@ class Instance {
   void printMap() const;
   void printAgentTargets(pair<int, int> state) const;
 
-  pair<int, int> validCoord(pair<int, int> state) const;
+  // pair<int, int> validCoord(pair<int, int> state) const;
+  void validCoord(pair<int, int>& state,
+                  pair<int, int>& blacklisted_state) const;
 
  private:
   // int moves_offset[MOVE_COUNT];

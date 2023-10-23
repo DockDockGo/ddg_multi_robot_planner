@@ -1,0 +1,6 @@
+downsampling_scale: 20.0
+new_resolution: 1.0
+original_resolution: 0.05
+translation:
+- 0.0
+- 0.0

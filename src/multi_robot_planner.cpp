@@ -9,10 +9,10 @@ MultiRobotPlanner::MultiRobotPlanner() : Node("multi_robot_planner_node") {
   clock_ = get_clock();
 
   timer_ = this->create_wall_timer(
-      1500ms, std::bind(&MultiRobotPlanner::timer_callback, this));
+      5000ms, std::bind(&MultiRobotPlanner::timer_callback, this));  // 0.2Hz
 
   robot_pose_timer_ = this->create_wall_timer(
-      200ms, std::bind(&MultiRobotPlanner::RobotPoseCallback, this));
+      50ms, std::bind(&MultiRobotPlanner::RobotPoseCallback, this));  // 20Hz
 
   RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"),
                      "Start multi robot planner!");
@@ -99,17 +99,17 @@ MultiRobotPlanner::MultiRobotPlanner() : Node("multi_robot_planner_node") {
 
   Initialize();
 
-  std::vector<std::pair<int, int>> planned_paths;
-  std::pair<int, int> tmp_point;
-  tmp_point.first = 2.0;
-  tmp_point.second = 2.0;
-  planned_paths.push_back(tmp_point);
-  tmp_point.first = 1.0;
-  tmp_point.second = 3.0;
-  planned_paths.push_back(tmp_point);
+  // std::vector<std::pair<int, int>> planned_paths;
+  // std::pair<int, int> tmp_point;
+  // tmp_point.first = 2.0;
+  // tmp_point.second = 2.0;
+  // planned_paths.push_back(tmp_point);
+  // tmp_point.first = 1.0;
+  // tmp_point.second = 3.0;
+  // planned_paths.push_back(tmp_point);
 
-  publishPlannedPaths(planned_paths);
-  printf("Finish multi robot planner!\n");
+  // publishPlannedPaths(planned_paths);
+  printf("Started multi robot planner!\n");
 
   // // Initialize your variables and subscribers here
   tf_buffer_ = std::make_shared<tf2_ros::Buffer>(this->get_clock());
@@ -151,56 +151,65 @@ bool MultiRobotPlanner::Initialize() {
   // pose test code
   geometry_msgs::msg::Pose tempPose;
 
-  instance_ptr = std::make_shared<Instance>(
-      "./src/ddg_multi_robot_planner/maps/svddemo-14-44-2.map");
-
   // instance_ptr = std::make_shared<Instance>(
-  //     "./src/ddg_multi_robot_planner/maps/downsampled-map/"
-  //     "svd_demo-downsampled.map");
+  //     "./src/ddg_multi_robot_planner/maps/svddemo-14-44-2.map");
+
+  instance_ptr = std::make_shared<Instance>(
+      "./src/ddg_multi_robot_planner/maps/downsampled-map/res20/"
+      "svd_demo-downsampled.map");
 
   AgentState tmp_state;
-  tempPose.position.x = 0.25;
-  tempPose.position.y = -0.75;
-  robot_start_poses.push_back(tempPose);
+  // tempPose.position.x = 0.25;
+  // tempPose.position.y = -0.75;
+  tempPose.position.x = -1.6;
+  tempPose.position.y = 1.4;
+
+  // robot_start_poses.push_back(tempPose);
   robot_curr_poses.push_back(tempPose);
-  robot_waypoints.push_back(tempPose);
-  robot_waypoints.push_back(tempPose);
+  // robot_waypoints.push_back(tempPose);
+  // robot_waypoints.push_back(tempPose);
+
   tmp_state = coordToCBS(tempPose);
   agent_start_states.push_back(tmp_state);
   agent_curr_states.push_back(tmp_state);
 
-  tempPose.position.x = 4.75;
-  tempPose.position.y = -1.25;
+  // tempPose.position.x = 4.75;
+  // tempPose.position.y = -1.25;
   tmp_state = coordToCBS(tempPose);
   GLOBAL_START.push_back(tmp_state);
 
-  tempPose.position.x = 0.25;
-  tempPose.position.y = 0.25;
+  tempPose.position.x = -1.6;
+  tempPose.position.y = -2.2;
+
   robot_start_poses.push_back(tempPose);
   robot_curr_poses.push_back(tempPose);
   tmp_state = coordToCBS(tempPose);
   agent_start_states.push_back(tmp_state);
   agent_curr_states.push_back(tmp_state);
 
-  tempPose.position.x = 1.25;
-  tempPose.position.y = -1.25;
+  // tempPose.position.x = 1.25;
+  // tempPose.position.y = -1.25;
   tmp_state = coordToCBS(tempPose);
   GLOBAL_START.push_back(tmp_state);
 
-  tempPose.position.x = 9.75;
-  tempPose.position.y = -0.25;
+  tempPose.position.x = 8.0;
+  tempPose.position.y = -2.0;
   robot_goal_poses.push_back(tempPose);
   tmp_state = coordToCBS(tempPose);
   agent_goal_states.push_back(tmp_state);
   GLOBAL_GOAL.push_back(tmp_state);
+  // GLOBAL_GOAL_WORLD_COORD.push_back(tempPose);
+  // target_pose.push_back(tempPose);
   next_round_goal.push_back(tmp_state);
 
-  tempPose.position.x = 8.25;
-  tempPose.position.y = -0.25;
+  tempPose.position.x = 8.0;
+  tempPose.position.y = -0.75;
   robot_goal_poses.push_back(tempPose);
   tmp_state = coordToCBS(tempPose);
   agent_goal_states.push_back(tmp_state);
   GLOBAL_GOAL.push_back(tmp_state);
+  // GLOBAL_GOAL_WORLD_COORD.push_back(tempPose);
+  // target_pose.push_back(tempPose);
   next_round_goal.push_back(tmp_state);
 
   // instance_ptr = std::make_shared<Instance>(
@@ -250,11 +259,19 @@ void MultiRobotPlanner::timer_callback() {
       for (int agent_idx = 0; agent_idx < _agentNum; agent_idx++) {
         geometry_msgs::msg::Pose next_tmp_pose = robot_curr_poses[agent_idx];
         std::pair<int, int> next_tmp_state = coordToCBS(next_tmp_pose);
+
+        if (agent_idx == 1) {  // TODO make this more general - currently only
+                               // valid for 2 robots
+          instance_ptr->validCoord(next_tmp_state, next_round_start[0]);
+        }
+
         next_round_start[agent_idx] = next_tmp_state;
+        // GLOBAL_START[agent_idx] = next_round_start[agent_idx];
       }
       next_round_goal[i] = GLOBAL_GOAL[i];
       GLOBAL_START[i] = next_round_start[i];
 
+      // target_pose[i] = GLOBAL_GOAL_WORLD_COORD[i];
       // agent_finish_count++;
 
       // if (!trip_directions[i]) {
@@ -271,10 +288,30 @@ void MultiRobotPlanner::timer_callback() {
       //     trip_directions[i] = false;
       // }
     } else {
+      // if (twoPoseDist(robot_curr_poses[i], robots_paths[i][AHEAD_TIME])
+      // < 2.5) {
+      //   for (int agent_idx = 0; agent_idx < _agentNum; agent_idx++) {
+      //     geometry_msgs::msg::Pose next_tmp_pose;
+      //     next_tmp_pose.position.x = (robots_paths[i][AHEAD_TIME].position.x
+      //     +
+      //                                 robot_curr_poses[agent_idx].position.x)
+      //                                 /
+      //                                2.0;
+      //     next_tmp_pose.position.y = (robots_paths[i][AHEAD_TIME].position.y
+      //     +
+      //                                 robot_curr_poses[agent_idx].position.y)
+      //                                 /
+      //                                2.0;
+      //     std::pair<int, int> next_tmp_state = coordToCBS(next_tmp_pose);
+      //     next_round_start[agent_idx] = next_tmp_state;
+      //     GLOBAL_START[agent_idx] = next_round_start[agent_idx];
+      //   }
+      // } else {
       geometry_msgs::msg::Pose next_tmp_pose = robots_paths[i][AHEAD_TIME];
       // geometry_msgs::msg::Pose next_tmp_pose = robot_curr_poses[i];
       std::pair<int, int> next_tmp_state = coordToCBS(next_tmp_pose);
       next_round_start[i] = next_tmp_state;
+      // }
     }
   }
   instance_ptr->updateStarts(next_round_start);
@@ -337,8 +374,9 @@ void MultiRobotPlanner::PublishSingleMarker(int agent_idx,
   }
 
   // //only if using a MESH_RESOURCE marker type:
-  // marker.mesh_resource = "package://pr2_description/meshes/base_v0/base.dae";
-  // vis_pub.publish( marker );
+  // marker.mesh_resource =
+  // "package://pr2_description/meshes/base_v0/base.dae"; vis_pub.publish(
+  // marker );
 }
 
 void MultiRobotPlanner::PublishCBSPath(int agent_idx, StatePath &agent_path) {
@@ -366,7 +404,8 @@ void MultiRobotPlanner::PublishCBSPath(int agent_idx, StatePath &agent_path) {
 }
 
 void MultiRobotPlanner::printStatePath(StatePath agent_path) {
-  // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "The path for agent is: %d", i);
+  // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "The path for agent is: %d",
+  // i);
   for (auto entry : agent_path) {
     RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Entry is: (%d, %d)", entry.first,
                 entry.second);
@@ -403,6 +442,7 @@ void MultiRobotPlanner::RobotGoalPoseCallback(
   if (correct_msg) {
     RCLCPP_INFO(this->get_logger(), "Got goal for agent: %s", agent_name);
     GLOBAL_GOAL[agent_idx] = coordToCBS(msg->pose);
+    // GLOBAL_GOAL_WORLD_COORD[agent_idx] = msg->pose;
     for (int i = 0; i < _agentNum; i++) {
       robots_paths[i].clear();
     }
@@ -426,6 +466,10 @@ void MultiRobotPlanner::RobotPoseCallback() {
   try {
     for (unsigned int agent_idx = 0; agent_idx < _agentNum; agent_idx++) {
       getRobotPose(robot_namespaces[agent_idx], robot_poses[agent_idx]);
+      robot_curr_poses[agent_idx].position.x =
+          robot_poses[agent_idx].pose.position.x;
+      robot_curr_poses[agent_idx].position.y =
+          robot_poses[agent_idx].pose.position.y;
     }
   } catch (const std::exception &ex) {
     RCLCPP_ERROR(this->get_logger(), "Error in parsing odometry: %s",
@@ -435,11 +479,6 @@ void MultiRobotPlanner::RobotPoseCallback() {
   // RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), " Got agent poses");
 
   for (unsigned int agent_idx = 0; agent_idx < _agentNum; agent_idx++) {
-    robot_curr_poses[agent_idx].position.x =
-        robot_poses[agent_idx].pose.position.x;
-    robot_curr_poses[agent_idx].position.y =
-        robot_poses[agent_idx].pose.position.y;
-
     // return;
 
     if (twoPoseDist(robot_curr_poses[agent_idx], robot_waypoints[agent_idx]) <
@@ -449,6 +488,15 @@ void MultiRobotPlanner::RobotPoseCallback() {
         // agent_idx);
         return;
       } else {
+        // if (robots_paths[agent_idx].size() == 1) {
+        //   RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Agent %d reaches its
+        //   goal",
+        //               agent_idx);
+        //   robot_waypoints[agent_idx] = target_pose[agent_idx];
+
+        // } else {
+        //   robot_waypoints[agent_idx] = robots_paths[agent_idx][0];
+        // }
         robot_waypoints[agent_idx] = robots_paths[agent_idx][0];
         robots_paths[agent_idx].pop_front();
         // publishWaypoint(robot_waypoints[agent_idx], agent_idx);
@@ -485,7 +533,8 @@ void MultiRobotPlanner::RobotPoseCallback() {
 //     for (unsigned int i = 0; i < _agentNum; i++) {
 //       if (frame_header.find(robot_namespaces[i]) != std::string::npos) {
 //         agent_idx = i;
-//         // RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "The agent is: "
+//         // RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "The agent is:
+//         "
 //         <<
 //         // agent_idx);
 //         correct_msg = true;
@@ -506,7 +555,8 @@ void MultiRobotPlanner::RobotPoseCallback() {
 
 //     // return;
 
-//     if (twoPoseDist(robot_curr_poses[agent_idx], robot_waypoints[agent_idx])
+//     if (twoPoseDist(robot_curr_poses[agent_idx],
+//     robot_waypoints[agent_idx])
 //     <
 //         EPS) {
 //       if (robots_paths[agent_idx].empty()) {
@@ -518,12 +568,13 @@ void MultiRobotPlanner::RobotPoseCallback() {
 //         robots_paths[agent_idx].pop_front();
 //         // publishWaypoint(robot_waypoints[agent_idx], agent_idx);
 //         RCLCPP_INFO(rclcpp::get_logger("rclcpp"),
-//                     "Publish waypoint for agent %d, at (%f, %f)", agent_idx,
-//                     robot_waypoints[agent_idx].position.x,
+//                     "Publish waypoint for agent %d, at (%f, %f)",
+//                     agent_idx, robot_waypoints[agent_idx].position.x,
 //                     robot_waypoints[agent_idx].position.y);
 //       }
 //     } else {
-//       // RCLCPP_INFO(this->get_logger(), "Distance for agent: %d bigger than
+//       // RCLCPP_INFO(this->get_logger(), "Distance for agent: %d bigger
+//       than
 //       // EPS, curr pose: (%f, %f), waypoint: (%f, %f)!",
 //       //     agent_idx, robot_curr_poses[agent_idx].position.x,
 //       //     robot_curr_poses[agent_idx].position.y,
@@ -587,8 +638,8 @@ AgentState MultiRobotPlanner::coordToCBS(geometry_msgs::msg::Pose robot_pose) {
   // worldToDownsampledMap(robot_pose.position.x, robot_pose.position.y,
   //                       robot_state.second, robot_state.first);
 
-  // if (mx < original_map_size_[0] && my < original_map_size_[1]) return true;
-  // return false;
+  // if (mx < original_map_size_[0] && my < original_map_size_[1]) return
+  // true; return false;
 
   // robot_state.first = (int)round(7.5 - 2 * robot_pose.position.y);
   // robot_state.second = (int)round(7.5 + 2 * robot_pose.position.x);
@@ -607,21 +658,22 @@ AgentState MultiRobotPlanner::coordToCBS(geometry_msgs::msg::Pose robot_pose) {
   robot_state.first =
 
       (int)round((original_map_size_[1] -
-                  1 * round((robot_pose.position.y - origin_[1]) /
+                  1 * round((robot_pose.position.y - offset_[1] - origin_[1]) /
                             (orignal_map_resolution))) /
                  downsampling_factor) -
       1;
 
-  robot_state.second = (int)round(
-      round((robot_pose.position.x - origin_[0]) / orignal_map_resolution) /
-      downsampling_factor);
+  robot_state.second =
+      (int)round(round((robot_pose.position.x - offset_[0] - origin_[0]) /
+                       orignal_map_resolution) /
+                 downsampling_factor);
 
   // RCLCPP_INFO(rclcpp::get_logger("rclcpp"),
-  //             "The calculated robot state2 is: (%d, %d)", robot_state.first,
-  //             robot_state.second);
+  //             "The calculated robot state2 is: (%d, %d)",
+  //             robot_state.first, robot_state.second);
 
   try {
-    robot_state = instance_ptr->validCoord(robot_state);
+    instance_ptr->validCoord(robot_state, dummy_state);
     // robot_state2 = instance_ptr->validCoord(robot_state2);
   } catch (const std::exception &ex) {
     RCLCPP_ERROR(this->get_logger(), "Error in parsing robot pose: %s",
@@ -633,8 +685,8 @@ AgentState MultiRobotPlanner::coordToCBS(geometry_msgs::msg::Pose robot_pose) {
   //             robot_state.second);
 
   // RCLCPP_INFO(rclcpp::get_logger("rclcpp"),
-  //             "The calculated robot state 2 is: (%d, %d)", robot_state2.first,
-  //             robot_state2.second);
+  //             "The calculated robot state 2 is: (%d, %d)",
+  //             robot_state2.first, robot_state2.second);
 
   // instance_ptr->printAgentTargets(robot_state);
 
@@ -692,13 +744,13 @@ geometry_msgs::msg::Pose MultiRobotPlanner::coordToGazebo(
 
   agent_pose.position.x =
       (orignal_map_resolution * downsampling_factor) * (agent_state.second) +
-      origin_[0];
+      origin_[0] + offset_[0];
 
   agent_pose.position.y = -1.0 *
                               ((agent_state.first + 1) * downsampling_factor -
                                original_map_size_[1]) *
                               orignal_map_resolution +
-                          origin_[1];
+                          origin_[1] + offset_[1];
   // 0.5;  // subtract 0.20 to compensate for information loss offset
 
   // RCLCPP_INFO(rclcpp::get_logger("rclcpp"),
@@ -907,7 +959,8 @@ void MultiRobotPlanner::handle_response(
     /// write results to files
     //////////////////////////////////////////////////////////////////////
     // if (vm.count("output"))
-    //   cbs.saveResults(vm["output"].as<string>(), vm["agents"].as<string>() +
+    //   cbs.saveResults(vm["output"].as<string>(), vm["agents"].as<string>()
+    //   +
     //   ":" + vm["agentIdx"].as<string>());
     // // cbs.saveCT(vm["output"].as<string>() + ".tree"); // for debug
     // if (vm["stats"].as<bool>())
@@ -983,8 +1036,8 @@ void MultiRobotPlanner::callCBS(std::vector<StatePath> &planned_paths) {
     /// write results to files
     //////////////////////////////////////////////////////////////////////
     if (cbs.solution_found) {
-      //   RCLCPP_INFO(this->get_logger(), "Succesfully found a path! Saving it
-      //   to file");
+      //   RCLCPP_INFO(this->get_logger(), "Succesfully found a path! Saving
+      //   it to file");
 
       // TODO Replace this with a function to get paths from cbs
       cbs.getSolvedPaths(planned_paths);
@@ -1103,18 +1156,46 @@ bool MultiRobotPlanner::updateMap() {
       request, response_received_callback);
   return true;
   // Update the map by calling the GetMap service or any other mechanism
-  // You can use the get_map_srv_client to send a request and receive a response
+  // You can use the get_map_srv_client to send a request and receive a
+  // response
 }
 
 bool MultiRobotPlanner::updateRobotPlan(
     std::vector<StatePath> &robot_state_paths) {
-  for (int i = 0; i < _agentNum; i++) {
+  for (int agent_idx = 0; agent_idx < _agentNum; agent_idx++) {
     PosePath tmp_pose_path;
-    convertPathToPosePath(robot_state_paths[i], tmp_pose_path);
-    robots_paths[i].clear();
+    convertPathToPosePath(robot_state_paths[agent_idx], tmp_pose_path);
+    robots_paths[agent_idx].clear();
     for (auto path_entry : tmp_pose_path) {
-      robots_paths[i].push_back(path_entry);
+      robots_paths[agent_idx].push_back(path_entry);
     }
+
+    // // copy position
+    // robots_paths[agent_idx][robots_paths[agent_idx].size() - 1].position.x
+    // =
+    //     target_pose[agent_idx].position.x;
+
+    // robots_paths[agent_idx][robots_paths[agent_idx].size() - 1].position.y
+    // =
+    //     target_pose[agent_idx].position.y;
+
+    // // copy oprinetation
+    // robots_paths[agent_idx][robots_paths[agent_idx].size() -
+    // 1].orientation.x
+    // =
+    //     target_pose[agent_idx].orientation.x;
+    // robots_paths[agent_idx][robots_paths[agent_idx].size() -
+    // 1].orientation.y
+    // =
+    //     target_pose[agent_idx].orientation.y;
+    // robots_paths[agent_idx][robots_paths[agent_idx].size() -
+    // 1].orientation.z
+    // =
+    //     target_pose[agent_idx].orientation.z;
+    // robots_paths[agent_idx][robots_paths[agent_idx].size() -
+    // 1].orientation.w
+    // =
+    //     target_pose[agent_idx].orientation.w;
   }
   return true;
 }
@@ -1134,7 +1215,8 @@ bool MultiRobotPlanner::getRobotPose(
   //   tf2::TimePointZero);
   //   // ,tf2::Duration(std::chrono::seconds(1)));
   // } catch (tf2::TransformException &ex) {
-  //   RCLCPP_ERROR(get_logger(), "Failed to obtain robot pose: %s", ex.what());
+  //   RCLCPP_ERROR(get_logger(), "Failed to obtain robot pose: %s",
+  //   ex.what());
   //   // exit(EXIT_FAILURE);
   //   return false;
   // }
@@ -1230,9 +1312,10 @@ bool MultiRobotPlanner::planPaths(
 // return pose_stamped_path;
 void MultiRobotPlanner::convertPathToPosePath(StatePath &state_path,
                                               PosePath &pose_path) {
-  pose_path.clear();
+  // pose_path.clear();
   for (auto entry : state_path) {
     geometry_msgs::msg::Pose tmp_robot_pose = coordToGazebo(entry);
+    // tmp_robot_pose.orientation.w = 1.0;
     pose_path.push_back(tmp_robot_pose);
   }
 }

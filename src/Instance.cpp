@@ -24,7 +24,7 @@ Instance::Instance(const string& map_fname, const string& agent_fname,
       saveMap();
     } else {
       cerr << "Map file " << map_fname << " not found." << endl;
-      exit(-1);
+      // exit(-1);
     }
   }
 
@@ -35,7 +35,7 @@ Instance::Instance(const string& map_fname, const string& agent_fname,
       saveAgents();
     } else {
       cerr << "Agent file " << agent_fname << " not found." << endl;
-      exit(-1);
+      // exit(-1);
     }
   }
 }
@@ -44,7 +44,7 @@ Instance::Instance(const string& map_fname) : map_fname(map_fname) {
   bool succ = loadMap();
   if (!succ) {
     cerr << "Map file " << map_fname << " not found." << endl;
-    exit(-1);
+    // exit(-1);
   }
 
   // succ = loadAgents();
@@ -312,15 +312,20 @@ void Instance::printAgentTargets(pair<int, int> state) const {
   // my_map[linearizeCoordinate(8, 40)]);
 }
 
-pair<int, int> Instance::validCoord(pair<int, int> state) const {
+void Instance::validCoord(pair<int, int>& state,
+                          pair<int, int>& blacklisted_state) const {
   if (state.first >= 0 && state.first < num_of_rows && state.second >= 0 &&
       state.second < num_of_cols) {
-    if (!this->my_map[linearizeCoordinate(state.first, state.second)]) {
-      return state;
+    if (!this->my_map[linearizeCoordinate(state.first, state.second)] &&
+        (state != blacklisted_state)) {
+      // return state;
+      return;
     }
   }
 
   int tmp_idx = 1;
+  int linearized_blacklisted_state =
+      linearizeCoordinate(blacklisted_state.first, blacklisted_state.second);
   while (true) {
     for (int i = -1 * tmp_idx; i <= tmp_idx; i++) {
       for (int j = -1 * tmp_idx; j <= tmp_idx; j++) {
@@ -328,10 +333,13 @@ pair<int, int> Instance::validCoord(pair<int, int> state) const {
         int tmp_col = state.second + j;
         if (tmp_row >= 0 && tmp_row < num_of_rows && tmp_col >= 0 &&
             tmp_col < num_of_cols) {
-          if (!this->my_map[linearizeCoordinate(tmp_row, tmp_col)]) {
+          int temp_linearized_state = linearizeCoordinate(tmp_row, tmp_col);
+          if (!this->my_map[temp_linearized_state] &&
+              (linearized_blacklisted_state != temp_linearized_state)) {
             state.first = tmp_row;
             state.second = tmp_col;
-            return state;
+            // return state;
+            return;
           }
         }
       }
@@ -339,7 +347,8 @@ pair<int, int> Instance::validCoord(pair<int, int> state) const {
     tmp_idx++;
   }
 
-  return state;
+  // return state;
+  return;
 }
 
 void Instance::saveMap() const {
@@ -405,7 +414,7 @@ bool Instance::loadAgents() {
   {
     if (num_of_agents == 0) {
       cerr << "The number of agents should be larger than 0" << endl;
-      exit(-1);
+      // exit(-1);
     }
     start_locations.resize(num_of_agents);
     goal_locations.resize(num_of_agents);
@@ -418,7 +427,7 @@ bool Instance::loadAgents() {
       for (auto c : chars) {
         ids[i] = atoi(c.c_str());
         if (i > 0 && ids[i] <= ids[i - 1])
-          exit(-1);  // the indices of the agents should be strictly increasing!
+          // exit(-1);  // the indices of the agents should be strictly increasing!
         i++;
       }
     } else {
