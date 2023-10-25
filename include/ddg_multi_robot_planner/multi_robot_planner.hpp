@@ -124,6 +124,7 @@ class MultiRobotPlanner : public rclcpp::Node {
   void PublishCBSPath(int agent_idx, StatePath &agent_path);
   void PublishSingleMarker(int agent_idx, std::string marker_type);
   void PublishMarker();
+  void resizeStateVars(int resize_size);
 
   // Public variables
  public:
@@ -260,6 +261,8 @@ class MultiRobotPlanner : public rclcpp::Node {
 
   double downsampling_factor = 20.0;  // downsampling factor of 10
   AgentState dummy_state = {0, 0};
+
+  bool goal_received = false;
 };
 
 }  // namespace multi_robot_planner

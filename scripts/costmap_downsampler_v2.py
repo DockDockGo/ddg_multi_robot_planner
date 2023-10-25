@@ -62,29 +62,50 @@ class MapDownSampler:
         #     self.downsampled_map, self.downsampled_map_file_path
         # )
 
-    def downsample_map(self, map, metadata, robot_cell_size=0.5, invert=False):
+    def downsample_map(
+        self, map, metadata, robot_cell_size=0.5, invert=False, downsampling_scale=12.0
+    ):
         print("Downsampling ...")
         downsampled_map = None
-        downsampling_scale = None
+        # downsampling_scale = None
         try:
-            downsampling_scale = np.ceil(
-                robot_cell_size / float(metadata["resolution"])
-            )
+            # downsampling_scale = np.ceil(
+            #     robot_cell_size / float(metadata["resolution"])
+            # )
+
+            plt.imshow(map, cmap="gray", origin="lower")
+            # Show the plot
+            plt.show()
+
+            map = (map > 25).astype(int)  # convert to binary image
+            map = map * 255.0
+
+            plt.imshow(map, cmap="gray", origin="lower")
+            # Show the plot
+            plt.show()
 
             # do non maximal supression on thresh image with the kernel size
             map = cv2.dilate(
                 map,
-                np.ones((int(downsampling_scale), int(downsampling_scale))),
+                np.ones((int(4), int(4))),
                 iterations=1,
             )
+            plt.imshow(map, cmap="gray", origin="lower")
+            # Show the plot
+            plt.show()
 
             downsampled_map = cv2.resize(
                 map,
                 None,
                 fx=1.0 / downsampling_scale,
                 fy=1.0 / downsampling_scale,
-                interpolation=cv2.INTER_NEAREST,
+                # interpolation=cv2.INTER_AREA,
+                interpolation=cv2.INTER_CUBIC,
             )
+
+            downsampled_map = 255.0 * (downsampled_map > 25).astype(
+                int
+            )  # convert to binary image
 
             if invert:
                 downsampled_map = 255 - downsampled_map
@@ -96,7 +117,11 @@ class MapDownSampler:
 
     def run_downsampling(self, invert=False):
         self.downsampled_map, self.downsampling_scale = self.downsample_map(
-            self.original_map, self.original_map_metadata, self.robot_footprint, invert
+            self.original_map,
+            self.original_map_metadata,
+            self.robot_footprint,
+            invert,
+            downsampling_scale=20.0,
         )
 
     def visualize_map(self, map):
@@ -147,7 +172,7 @@ class MapDownSampler:
             # map_data = map_data.T
             for row in map_data:
                 for col in row:
-                    if col > 200:
+                    if col > 220:
                         f.write(".")
                     else:
                         f.write("@")
@@ -156,10 +181,10 @@ class MapDownSampler:
 
 if __name__ == "__main__":
     map_downsampler = MapDownSampler(
-        map_file_path="/home/vineet/mfi_maps/Sept8",
-        map_name="croped_map",
-        # map_file_path="/home/vineet/mfi_maps/svd_demo_final",
-        # map_name="svd_demo",
+        # map_file_path="/home/vineet/mfi_maps/Sept8",
+        # map_name="croped_map",
+        map_file_path="/home/vineet/mfi_maps/svd_demo_final",
+        map_name="svd_demo",
         robot_footprint=0.6,  # 0.5 meters,
     )
 
