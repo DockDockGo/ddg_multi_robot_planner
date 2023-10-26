@@ -387,32 +387,32 @@ void MultiRobotPlanner::RobotPoseCallback() {
 
   for (unsigned int agent_idx = 0; agent_idx < _agentNum; agent_idx++) {
     // return;
-    if (robot_waypoints.empty()) continue;
+    if (robots_paths[agent_idx].empty()) continue;
 
     if (twoPoseDist(robot_curr_poses[agent_idx], robot_waypoints[agent_idx]) <
         EPS) {
-      if (robots_paths[agent_idx].empty()) {
-        // RCLCPP_WARN(this->get_logger(), "Path for agent: %d is empty!",
-        // agent_idx);
-        return;
-      } else {
-        // if (robots_paths[agent_idx].size() == 1) {
-        //   RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Agent %d reaches its
-        //   goal",
-        //               agent_idx);
-        //   robot_waypoints[agent_idx] = target_pose[agent_idx];
+      robot_waypoints[agent_idx] = robots_paths[agent_idx][0];
+      robots_paths[agent_idx].pop_front();
+      RCLCPP_INFO(rclcpp::get_logger("rclcpp"),
+                  "Publish waypoint for agent %d, at (%f, %f)", agent_idx,
+                  robot_waypoints[agent_idx].position.x,
+                  robot_waypoints[agent_idx].position.y);
+      // if (robots_paths[agent_idx].empty()) {
+      //   // RCLCPP_WARN(this->get_logger(), "Path for agent: %d is empty!",
+      //   // agent_idx);
+      //   return;
+      // } else {
+      //   // if (robots_paths[agent_idx].size() == 1) {
+      //   //   RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Agent %d reaches its
+      //   //   goal",
+      //   //               agent_idx);
+      //   //   robot_waypoints[agent_idx] = target_pose[agent_idx];
 
-        // } else {
-        //   robot_waypoints[agent_idx] = robots_paths[agent_idx][0];
-        // }
-        robot_waypoints[agent_idx] = robots_paths[agent_idx][0];
-        robots_paths[agent_idx].pop_front();
-        // publishWaypoint(robot_waypoints[agent_idx], agent_idx);
-        RCLCPP_INFO(rclcpp::get_logger("rclcpp"),
-                    "Publish waypoint for agent %d, at (%f, %f)", agent_idx,
-                    robot_waypoints[agent_idx].position.x,
-                    robot_waypoints[agent_idx].position.y);
-      }
+      //   // } else {
+      //   //   robot_waypoints[agent_idx] = robots_paths[agent_idx][0];
+      //   // }
+
+      // }
     } else {
       // RCLCPP_INFO(this->get_logger(), "Distance for agent: %d bigger than
       // EPS, curr pose: (%f, %f), waypoint: (%f, %f)!",
@@ -520,6 +520,12 @@ void MultiRobotPlanner::publishPlannedPaths(
 
 void MultiRobotPlanner::publishWaypoint(geometry_msgs::msg::Pose &waypoint,
                                         int agent_id) {
+  // if (waypooint.position.x == 0.0 && waypoint.position.y == 0.0) {
+  //   RCLCPP_WARN(rclcpp::get_logger("rclcpp"),
+  //               "Waypoint for agent %d is (0, 0), skipping", agent_id);
+  //   return;
+  // }
+
   geometry_msgs::msg::PoseStamped goal_pose;
   goal_pose.header.frame_id = "map";
   goal_pose.header.stamp = clock_->now();
