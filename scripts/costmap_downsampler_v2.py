@@ -183,8 +183,10 @@ if __name__ == "__main__":
     map_downsampler = MapDownSampler(
         # map_file_path="/home/vineet/mfi_maps/Sept8",
         # map_name="croped_map",
-        map_file_path="/home/vineet/mfi_maps/svd_demo_final",
-        map_name="svd_demo",
+        # map_file_path="/home/vineet/mfi_maps/svd_demo_final",
+        # map_name="svd_demo",
+        map_file_path="/home/vineet/mfi_maps/Oct-16/",
+        map_name="Oct-16",
         robot_footprint=0.6,  # 0.5 meters,
     )
 
