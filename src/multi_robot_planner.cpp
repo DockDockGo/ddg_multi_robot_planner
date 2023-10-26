@@ -1065,21 +1065,30 @@ bool MultiRobotPlanner::planPaths(
   std::vector<AgentState> tmp_agent_goal_states;
   std::vector<AgentState> tmp_agent_start_states;
 
+  RCLCPP_INFO(this->get_logger(), "Number of agents: %d", tmp_agent_num);
+
   for (int i = 0; i < tmp_agent_num; i++) {
     tmp_agent_start_states.push_back(coordToCBS(agent_start_poses[i].pose));
     tmp_agent_goal_states.push_back(coordToCBS(agent_goal_poses[i].pose));
   }
 
-  instance_ptr->updateAgents(tmp_agent_num, agent_start_states,
-                             agent_goal_states);
   instance_ptr->printMap();
 
+  RCLCPP_INFO(this->get_logger(), "Setting states!");
+
+  instance_ptr->updateAgents(tmp_agent_num, tmp_agent_start_states,
+                             tmp_agent_goal_states);
+
+  RCLCPP_INFO(this->get_logger(), "Planning Paths!");
   std::vector<StatePath> planned_paths;
   callCBS(planned_paths);
 
+  RCLCPP_INFO(this->get_logger(), "returning paths!");
   for (int i = 0; i < tmp_agent_num; i++) {
     nav_msgs::msg::Path tmp_pose_path;
+    // TODO update this
     tmp_pose_path.header.frame_id = "robot" + std::to_string(i);
+
     for (auto state_pose : planned_paths[i]) {
       geometry_msgs::msg::PoseStamped tmp_robot_pose;
       tmp_robot_pose.header.frame_id = "map";
