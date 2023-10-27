@@ -9,6 +9,15 @@ from launch_ros.actions import Node
 def generate_launch_description():
     # Get the path to the ROS2 package
     my_package_share_directory = get_package_share_directory("ddg_multi_robot_planner")
+    # TODO add a launch arguments for:
+    # 1. the map file               [ ]
+    # 2. simulation / real robot    [ ]
+    # 3. num_robots                 [ ]
+    # 4. downsampling scale         [ ]
+    # 5. map origin                 [ ]
+    # 6. map resolution             [ ]
+    # 7. original_map_size_         [ ]
+    # 8. offset in x and y          [ ]
 
     # Create the ROS2 launch description
     ld = LaunchDescription()

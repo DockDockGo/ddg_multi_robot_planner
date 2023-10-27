@@ -42,20 +42,9 @@ using namespace std::chrono_literals;
 #define EPS 0.8
 #define WAITSTEP 2
 
-// struct AgentState{
-//     int x;
-//     int y;
-// };
-
-// AgentState GLOBAL_START1(8, 7);
-// AgentState GLOBAL_START2(8, 9);
-// AgentState GLOBAL_GOAL1(24, 8);
-// AgentState GLOBAL_GOAL2(26, 8);
-
 namespace multi_robot_planner {
 
 // Define any other necessary includes
-
 class MultiRobotPlanner : public rclcpp::Node {
   // public functions
  public:
@@ -267,10 +256,7 @@ class MultiRobotPlanner : public rclcpp::Node {
   std::vector<int> original_map_size_ = {443,
                                          149};  // origin of the original map
   std::vector<double> offset_ = {0.2, 0.7};     // origin of the original map
-  //   double downsampling_factor = 10.0;            // downsampling factor of
-  //   10
-
-  double downsampling_factor = 20.0;  // downsampling factor of 10
+  double downsampling_factor = 20.0;            // downsampling factor of 10
   AgentState dummy_state = {0, 0};
 
   bool goal_received = false;
