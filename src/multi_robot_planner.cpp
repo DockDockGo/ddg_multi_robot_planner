@@ -138,10 +138,7 @@ bool MultiRobotPlanner::Initialize() {
   robot_curr_poses.push_back(tempPose);
   tmp_state = coordToCBS(tempPose);
   agent_start_states.push_back(tmp_state);
-  // agent_curr_states.push_back(tmp_state);
 
-  // tempPose.position.x = 1.25;
-  // tempPose.position.y = -1.25;
   tmp_state = coordToCBS(tempPose);
   GLOBAL_START.push_back(tmp_state);
 
@@ -275,40 +272,25 @@ void MultiRobotPlanner::PublishSingleMarker(int agent_idx,
     marker.pose = tmp_robot_pose;
     agents_pub_goal_marker[agent_idx]->publish(marker);
   }
-
-  // //only if using a MESH_RESOURCE marker type:
-  // marker.mesh_resource =
-  // "package://pr2_description/meshes/base_v0/base.dae"; vis_pub.publish(
-  // marker );
 }
 
 void MultiRobotPlanner::PublishCBSPath(int agent_idx, StatePath &agent_path) {
   nav_msgs::msg::Path pose_path;
-  // pose_path.header.seq = path_counter_;
-  // path_counter_++;
   pose_path.header.frame_id = "map";
   pose_path.header.stamp = clock_->now();
   for (auto entry : agent_path) {
     geometry_msgs::msg::PoseStamped tmp_pose;
     geometry_msgs::msg::Pose tmp_tmp_pose;
     tmp_tmp_pose = coordToGazebo(entry);
-    // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Pose is: (%f, %f)",
-    //     tmp_tmp_pose.position.x, tmp_tmp_pose.position.y);
     tmp_pose.pose = tmp_tmp_pose;
     tmp_pose.header.frame_id = "map";
     tmp_pose.header.stamp = clock_->now();
     pose_path.poses.push_back(tmp_pose);
-    // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "StampPose is: (%f, %f)",
-    //     tmp_pose.pose.position.x, tmp_pose.pose.position.y);
-    // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Entry is: (%f, %f)",
-    //     entry.first, entry.second);
   }
   agents_pub_path[agent_idx]->publish(pose_path);
 }
 
 void MultiRobotPlanner::printStatePath(StatePath agent_path) {
-  // RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "The path for agent is: %d",
-  // i);
   for (auto entry : agent_path) {
     RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Entry is: (%d, %d)", entry.first,
                 entry.second);
@@ -360,13 +342,7 @@ void MultiRobotPlanner::RobotPoseCallback() {
   if (!planner_initialized) {
     return;
   }
-
-  // RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "Sub odom: " <<
   vector<geometry_msgs::msg::PoseStamped> robot_poses(2);
-
-  // RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), " Inside
-  // RobotPoseCallback");
-
   try {
     for (unsigned int agent_idx = 0; agent_idx < _agentNum; agent_idx++) {
       getRobotPose(robot_namespaces[agent_idx], robot_poses[agent_idx]);
@@ -378,15 +354,11 @@ void MultiRobotPlanner::RobotPoseCallback() {
   } catch (const std::exception &ex) {
     RCLCPP_ERROR(this->get_logger(), "Error in parsing tf tree: %s", ex.what());
   }
-
-  // RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), " Got agent poses");
-
   if (!goal_received) {
     return;
   }
 
   for (unsigned int agent_idx = 0; agent_idx < _agentNum; agent_idx++) {
-    // return;
     if (robots_paths[agent_idx].empty()) continue;
 
     if (twoPoseDist(robot_curr_poses[agent_idx], robot_waypoints[agent_idx]) <
@@ -397,110 +369,10 @@ void MultiRobotPlanner::RobotPoseCallback() {
                   "Publish waypoint for agent %d, at (%f, %f)", agent_idx,
                   robot_waypoints[agent_idx].position.x,
                   robot_waypoints[agent_idx].position.y);
-      // if (robots_paths[agent_idx].empty()) {
-      //   // RCLCPP_WARN(this->get_logger(), "Path for agent: %d is empty!",
-      //   // agent_idx);
-      //   return;
-      // } else {
-      //   // if (robots_paths[agent_idx].size() == 1) {
-      //   //   RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Agent %d reaches its
-      //   //   goal",
-      //   //               agent_idx);
-      //   //   robot_waypoints[agent_idx] = target_pose[agent_idx];
-
-      //   // } else {
-      //   //   robot_waypoints[agent_idx] = robots_paths[agent_idx][0];
-      //   // }
-
-      // }
-    } else {
-      // RCLCPP_INFO(this->get_logger(), "Distance for agent: %d bigger than
-      // EPS, curr pose: (%f, %f), waypoint: (%f, %f)!",
-      //     agent_idx, robot_curr_poses[agent_idx].position.x,
-      //     robot_curr_poses[agent_idx].position.y,
-      //     robot_waypoints[agent_idx].position.x,
-      //     robot_waypoints[agent_idx].position.y);
     }
     publishWaypoint(robot_waypoints[agent_idx], agent_idx);
   }
 }
-
-// void MultiRobotPlanner::RobotPoseCallback(
-//     const nav_msgs::msg::Odometry::SharedPtr msg) {
-//   if (!planner_initialized) {
-//     return;
-//   }
-//   // RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "Sub odom: " <<
-//   // msg->header.frame_id);
-//   std::string frame_header = msg->header.frame_id;
-
-//   unsigned int agent_idx = 0;
-//   bool correct_msg = false;
-//   try {
-//     for (unsigned int i = 0; i < _agentNum; i++) {
-//       if (frame_header.find(robot_namespaces[i]) != std::string::npos) {
-//         agent_idx = i;
-//         // RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "The agent is:
-//         "
-//         <<
-//         // agent_idx);
-//         correct_msg = true;
-//         break;
-//       }
-//     }
-//   } catch (const std::exception &ex) {
-//     RCLCPP_ERROR(this->get_logger(), "Error in parsing odometry: %s",
-//                  ex.what());
-//   }
-
-//   // RCLCPP_INFO(this->get_logger(), "The agent is: %d, at (%f, %f)",
-//   //     agent_idx, robot_curr_poses[agent_idx].position.x,
-//   //     robot_curr_poses[agent_idx].position.y);
-//   if (correct_msg) {
-//     robot_curr_poses[agent_idx].position.x = msg->pose.pose.position.x;
-//     robot_curr_poses[agent_idx].position.y = msg->pose.pose.position.y;
-
-//     // return;
-
-//     if (twoPoseDist(robot_curr_poses[agent_idx],
-//     robot_waypoints[agent_idx])
-//     <
-//         EPS) {
-//       if (robots_paths[agent_idx].empty()) {
-//         // RCLCPP_WARN(this->get_logger(), "Path for agent: %d is empty!",
-//         // agent_idx);
-//         return;
-//       } else {
-//         robot_waypoints[agent_idx] = robots_paths[agent_idx][0];
-//         robots_paths[agent_idx].pop_front();
-//         // publishWaypoint(robot_waypoints[agent_idx], agent_idx);
-//         RCLCPP_INFO(rclcpp::get_logger("rclcpp"),
-//                     "Publish waypoint for agent %d, at (%f, %f)",
-//                     agent_idx, robot_waypoints[agent_idx].position.x,
-//                     robot_waypoints[agent_idx].position.y);
-//       }
-//     } else {
-//       // RCLCPP_INFO(this->get_logger(), "Distance for agent: %d bigger
-//       than
-//       // EPS, curr pose: (%f, %f), waypoint: (%f, %f)!",
-//       //     agent_idx, robot_curr_poses[agent_idx].position.x,
-//       //     robot_curr_poses[agent_idx].position.y,
-//       //     robot_waypoints[agent_idx].position.x,
-//       //     robot_waypoints[agent_idx].position.y);
-//       ;
-//     }
-//     publishWaypoint(robot_waypoints[agent_idx], agent_idx);
-//   } else {
-//     RCLCPP_ERROR(this->get_logger(), "Error in parsing odometry: %s",
-//                  frame_header);
-//   }
-
-//   // RCLCPP_INFO(this->get_logger(), "The agent is: %d, at (%f, %f)",
-//   //     agent_idx, robot_curr_poses[agent_idx].position.x,
-//   //     robot_curr_poses[agent_idx].position.y);
-
-//   // exit(0);
-// }
 
 void MultiRobotPlanner::publishPlannedPaths(
     std::vector<std::pair<int, int>> &planned_paths) {
@@ -520,12 +392,6 @@ void MultiRobotPlanner::publishPlannedPaths(
 
 void MultiRobotPlanner::publishWaypoint(geometry_msgs::msg::Pose &waypoint,
                                         int agent_id) {
-  // if (waypooint.position.x == 0.0 && waypoint.position.y == 0.0) {
-  //   RCLCPP_WARN(rclcpp::get_logger("rclcpp"),
-  //               "Waypoint for agent %d is (0, 0), skipping", agent_id);
-  //   return;
-  // }
-
   geometry_msgs::msg::PoseStamped goal_pose;
   goal_pose.header.frame_id = "map";
   goal_pose.header.stamp = clock_->now();
@@ -590,38 +456,8 @@ geometry_msgs::msg::Pose MultiRobotPlanner::coordToGazebo(
   return agent_pose;
 }
 
-void MultiRobotPlanner::configure() {
-  // TODO Replace this with a function to pass the maps and location of agents
-  // rather than files
-
-  // Instance instance(_map_file_name, _agent_scen_file_name,
-  //                   _agentNum, _agentIdx,
-  //                   _rows, _cols, _num_obstacles, _warehouseWidth);
-
-  // //////////////////////////////////////////////////////////////////////
-  // /// initialize the solver
-  // //////////////////////////////////////////////////////////////////////
-  // CBS cbs(instance, _use_sipp, _display_output_on_screen);
-  // cbs.setPrioritizeConflicts(_prioritizingConflicts);
-  // cbs.setDisjointSplitting(_disjointSplitting);
-  // cbs.setBypass(_bypass);
-  // cbs.setRectangleReasoning(_rectangleReasoning);
-  // cbs.setCorridorReasoning(_corridorReasoning);
-  // cbs.setHeuristicType(_heuristics);
-  // cbs.setTargetReasoning(_targetReasoning);
-  // cbs.setMutexReasoning(_mutexReasoning);
-  // cbs.setSavingStats(_saving_stats);
-  // cbs.setNodeLimit(_nodeLimit);
-}
-
 MultiRobotPlanner::~MultiRobotPlanner() {
   // Perform any cleanup or resource deallocation here
-}
-
-void MultiRobotPlanner::updateNamespaces(
-    std::vector<std::string> &robot_namespaces) {
-  // Update the robot namespaces
-  this->robot_namespaces = robot_namespaces;
 }
 
 void MultiRobotPlanner::mapCallback(
@@ -927,8 +763,6 @@ bool MultiRobotPlanner::updateMap() {
   while (!get_map_srv_client->wait_for_service(std::chrono::seconds(1))) {
     // TODO add a counter to prevent this loop from blocking the thread.
     if (!rclcpp::ok()) {
-      // RCLCPP_ERROR(node->get_logger(), "Interrupted while waiting for the
-      // service");
       return false;
     }
     RCLCPP_INFO(this->get_logger(), "Service not available, waiting...");
@@ -1021,12 +855,6 @@ bool MultiRobotPlanner::getRobotPose(
   return true;
 }
 
-// TODO @VineetTambe Remove this function
-bool MultiRobotPlanner::updateRobotPoses() {
-  bool ret = true;
-  return ret;
-}
-
 bool MultiRobotPlanner::createAgentScenarioFile(
     std::vector<geometry_msgs::msg::Pose> &robot_start_poses,
     std::vector<geometry_msgs::msg::Pose> &robot_goal_poses,
@@ -1106,9 +934,6 @@ bool MultiRobotPlanner::planPaths(
   return true;
 }
 
-// Convert the planned path represented as a list of grid positions to
-// PoseStamped messages
-
 // Example:
 // std::vector<geometry_msgs::msg::PoseStamped> pose_stamped_path;
 // ... convert the path to PoseStamped messages ...
@@ -1129,14 +954,11 @@ void MultiRobotPlanner::handleGetMultiPlanServiceRequest(
     std::shared_ptr<ddg_multi_robot_srvs::srv::GetMultiPlan::Response>
         response) {
   try {
-    response->success = planPaths(
-        // request->robot_namespaces,
-        request->start, request->goal, response->plan);
-    // response->robot_namespaces = request->robot_namespaces;
+    response->success =
+        planPaths(request->start, request->goal, response->plan);
   } catch (const std::exception &ex) {
     // Handle the exception
     response->success = false;
-    // response->error_message = ex.what();
     RCLCPP_ERROR(this->get_logger(), "Failed to plan paths: %s", ex.what());
   }
   return;
@@ -1148,30 +970,6 @@ int main(int argc, char *argv[]) {
   // Initialize the ROS2 node
   rclcpp::init(argc, argv);
   rclcpp::spin(std::make_shared<multi_robot_planner::MultiRobotPlanner>());
-
-  // crete a service call to get paths for n robots -> service call.
-  /** Service call accepts the following arguments:
-  0. get the map                      [x]
-  1. start position of the robot      [x]
-  2. goal postion of the robot        [x]
-  3. robot namespaces                 [x]
-
-  Service call returns the following:
-  1. A hashmap of posestamped messages with pose for each robot.
-  */
-
-  // TODO call this service call from multi-navigator node.
-
-  /**
-   * Todo @ Jingtian
-   * 1. Write and read file with start and goal location for agents        [x]
-   * 2. Initialize the instance                                            [x]
-   * 3. Subscribe to the robot pose and pushlish next goal                 [x]
-   * 4. Call CBS planner and the path                                      [x]
-   * 5. Map allignment, from coordinate of Gazebo to gridmap               [x]
-   * 6. Transform the state path, and pub the next state                   [x]
-   * 7. Figure out the orientation problem                                 [ ]
-   **/
 
   // Shutdown ROS2
   rclcpp::shutdown();

@@ -64,7 +64,6 @@ class MultiRobotPlanner : public rclcpp::Node {
   // Destructor
   ~MultiRobotPlanner();
 
-  void updateNamespaces(std::vector<std::string> &robot_namespaces);
   void mapCallback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg);
   void writeMapToFile(std::vector<std::vector<char>> &occupancy_map,
                       const std::string &file_path);
@@ -73,7 +72,6 @@ class MultiRobotPlanner : public rclcpp::Node {
   void printMap(std::vector<std::vector<char>> &map);
   void handle_response(nav_msgs::srv::GetMap::Response::SharedPtr response);
   bool updateMap();
-  bool updateRobotPoses();
   bool getRobotPose(std::string &robot_namespace,
                     geometry_msgs::msg::PoseStamped &robot_pose);
   // Plan paths for all robots
@@ -110,7 +108,6 @@ class MultiRobotPlanner : public rclcpp::Node {
       std::string &file_path);
   bool readPlannedPathFromFile(const std::string &filename,
                                std::vector<nav_msgs::msg::Path> &planned_paths);
-  void configure();
   void publishPlannedPaths(std::vector<nav_msgs::msg::Path> &planned_paths);
   void publishPlannedPaths(std::vector<std::pair<int, int>> &planned_paths);
   void timer_callback();
