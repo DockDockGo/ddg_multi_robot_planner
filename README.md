@@ -13,6 +13,15 @@ Results:
 
 Instructions to run:
 
+To generate the map file run the downsampling script in `scripts/costmap_downsampler_v2.py`
+
+an example run command is: 
+```
+python your_script.py --map_file_path ~/mfi_maps/Oct-16/ --map_name Oct-16 --robot_footprint 0.6
+```
+
+The program expects a meta.yaml and .pgm file at the spcified location.
+
 
 The resources and setup to run the planner as per the gif above in simulation can be found [in this repository](https://github.com/DockDockGo/mfi_multiagent_sim)
 The planner can be launched by running:
