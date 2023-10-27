@@ -1,10 +1,8 @@
 import numpy as np
 import cv2
-
-# import matplotlib
-# matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 import yaml
+import argparse
 
 
 class MapDownSampler:
@@ -180,14 +178,23 @@ class MapDownSampler:
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Map DownSampler")
+    parser.add_argument("--map_file_path", required=True, help="Path to the map file")
+    parser.add_argument("--map_name", required=True, help="Name of the map")
+
+    args = parser.parse_args()
+
     map_downsampler = MapDownSampler(
-        # map_file_path="/home/vineet/mfi_maps/Sept8",
+        # map_file_path="~/mfi_maps/Sept8",
         # map_name="croped_map",
-        # map_file_path="/home/vineet/mfi_maps/svd_demo_final",
+        # map_file_path="~/mfi_maps/svd_demo_final",
         # map_name="svd_demo",
-        map_file_path="/home/vineet/mfi_maps/Oct-16/",
-        map_name="Oct-16",
-        robot_footprint=0.6,  # 0.5 meters,
+        # map_file_path="~/mfi_maps/Oct-16/",
+        # map_name="Oct-16",
+        # robot_footprint=0.6,  # 0.5 meters,
+        map_file_path=args.map_file_path,
+        map_name=args.map_name,
+        robot_footprint=args.robot_footprint,
     )
 
     map_downsampler.run_downsampling(invert=True)
