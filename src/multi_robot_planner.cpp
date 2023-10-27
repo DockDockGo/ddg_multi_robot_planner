@@ -929,7 +929,8 @@ bool MultiRobotPlanner::planPaths(
   for (int i = 0; i < tmp_agent_num; i++) {
     nav_msgs::msg::Path tmp_pose_path;
     // TODO update this
-    tmp_pose_path.header.frame_id = "robot" + std::to_string(i);
+    // tmp_pose_path.header.frame_id = "robot" + std::to_string(i);
+    tmp_pose_path.header.frame_id = "map";
 
     for (auto state_pose : planned_paths[i]) {
       geometry_msgs::msg::PoseStamped tmp_robot_pose;
@@ -937,6 +938,8 @@ bool MultiRobotPlanner::planPaths(
       tmp_robot_pose.pose = coordToGazebo(state_pose);
       tmp_pose_path.poses.push_back(tmp_robot_pose);
     }
+    // add the goal back as a final pose (for orientation)
+    tmp_pose_path.poses.push_back(agent_goal_poses[i]);
     cbs_planned_paths.push_back(tmp_pose_path);
   }
   return true;
