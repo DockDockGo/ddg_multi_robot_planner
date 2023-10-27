@@ -9,7 +9,7 @@ MultiRobotPlanner::MultiRobotPlanner() : Node("multi_robot_planner_node") {
   clock_ = get_clock();
 
   timer_ = this->create_wall_timer(
-      50ms, std::bind(&MultiRobotPlanner::timer_callback, this));  // 2Hz
+      1000ms, std::bind(&MultiRobotPlanner::timer_callback, this));
 
   robot_pose_timer_ = this->create_wall_timer(
       50ms, std::bind(&MultiRobotPlanner::RobotPoseCallback, this));  // 20Hz
@@ -112,6 +112,15 @@ MultiRobotPlanner::MultiRobotPlanner() : Node("multi_robot_planner_node") {
                   response) {
             handleGetMultiPlanServiceRequest(request, response);
           });
+
+  go_to_goal_cbs_service_ = create_service<ddg_multi_robot_srvs::srv::GoToGoal>(
+      "/multi_robot_planner/go_to_goal_cbs",
+      [this](const std::shared_ptr<ddg_multi_robot_srvs::srv::GoToGoal::Request>
+                 request,
+             std::shared_ptr<ddg_multi_robot_srvs::srv::GoToGoal::Response>
+                 response) {
+        handleGoToGoalCBSServiceRequest(request, response);
+      });
 }
 
 bool MultiRobotPlanner::Initialize() {
@@ -166,7 +175,6 @@ bool MultiRobotPlanner::Initialize() {
     at_goal_wait.push_back(WAITSTEP);
   }
   planner_initialized = true;
-  // goal_received = true;
 }
 
 void MultiRobotPlanner::resizeStateVars(int resize_size) {
@@ -932,6 +940,47 @@ bool MultiRobotPlanner::planPaths(
     cbs_planned_paths.push_back(tmp_pose_path);
   }
   return true;
+}
+
+bool MultiRobotPlanner::goToGoalCBS(
+    std::vector<geometry_msgs::msg::PoseStamped> &agent_goal_poses) {
+  // int tmp_agent_num = agent_goal_poses.size();
+  std::vector<AgentState> tmp_agent_goal_states;
+
+  // resizeStateVars(tmp_agent_num);
+  // _agentNum = tmp_agent_num;
+
+  RCLCPP_INFO(this->get_logger(),
+              "Number of agents: %d (only configured for 2 as of now)",
+              _agentNum);
+
+  try {
+    for (int agent_idx = 0; agent_idx < _agentNum; agent_idx++) {
+      RCLCPP_INFO(this->get_logger(), "Setting goal for agent number: %d",
+                  agent_idx);
+      GLOBAL_GOAL[agent_idx] = coordToCBS(agent_goal_poses[agent_idx].pose);
+      robots_paths[agent_idx].clear();
+    }
+  } catch (const std::exception &ex) {
+    RCLCPP_ERROR(this->get_logger(), "Error in parsing robot pose: %s",
+                 ex.what());
+    return false;
+  }
+  goal_received = true;
+  return true;
+}
+
+void MultiRobotPlanner::handleGoToGoalCBSServiceRequest(
+    const std::shared_ptr<ddg_multi_robot_srvs::srv::GoToGoal::Request> request,
+    std::shared_ptr<ddg_multi_robot_srvs::srv::GoToGoal::Response> response) {
+  try {
+    response->success = goToGoalCBS(request->goals);
+  } catch (const std::exception &ex) {
+    // Handle the exception
+    response->success = false;
+    RCLCPP_ERROR(this->get_logger(), "Failed to plan paths: %s", ex.what());
+  }
+  return;
 }
 
 // Example:

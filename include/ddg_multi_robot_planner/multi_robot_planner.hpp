@@ -16,9 +16,10 @@
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/string.hpp"
 // TODO(@VineetTambe: replace unordered_map with boost:flatmap for efficiency)
-#include <unordered_map>
+// #include <unordered_map>
 
 #include "ddg_multi_robot_srvs/srv/get_multi_plan.hpp"
+#include "ddg_multi_robot_srvs/srv/go_to_goal.hpp"
 // #include <boost/program_options.hpp>
 // #include <boost/tokenizer.hpp>
 #include <chrono>
@@ -101,6 +102,15 @@ class MultiRobotPlanner : public rclcpp::Node {
           request,
       std::shared_ptr<ddg_multi_robot_srvs::srv::GetMultiPlan::Response>
           response);
+
+  void handleGoToGoalCBSServiceRequest(
+      const std::shared_ptr<ddg_multi_robot_srvs::srv::GoToGoal::Request>
+          request,
+      std::shared_ptr<ddg_multi_robot_srvs::srv::GoToGoal::Response> response);
+
+  bool goToGoalCBS(
+      std::vector<geometry_msgs::msg::PoseStamped> &agent_goal_poses);
+
   bool createAgentScenarioFile(
       std::vector<geometry_msgs::msg::Pose> &robot_start_poses,
       std::vector<geometry_msgs::msg::Pose> &robot_goal_poses,
@@ -113,7 +123,8 @@ class MultiRobotPlanner : public rclcpp::Node {
   void timer_callback();
   //   void RobotPoseCallback(const nav_msgs::msg::Odometry::SharedPtr msg);
   //   void RobotPoseCallback(
-  //       const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr msg);
+  //       const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr
+  //       msg);
   void RobotPoseCallback();
   void RobotGoalPoseCallback(
       const geometry_msgs::msg::PoseStamped::SharedPtr msg);
@@ -196,6 +207,9 @@ class MultiRobotPlanner : public rclcpp::Node {
   rclcpp::Service<ddg_multi_robot_srvs::srv::GetMultiPlan>::SharedPtr
       get_multi_plan_service_;
 
+  rclcpp::Service<ddg_multi_robot_srvs::srv::GoToGoal>::SharedPtr
+      go_to_goal_cbs_service_;
+
   std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
   std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
 
@@ -230,8 +244,8 @@ class MultiRobotPlanner : public rclcpp::Node {
       0;  // screen option (0: none; 1: results; 2:all)
 
   bool _prioritizingConflicts =
-      true;  // conflict priortization. If true, conflictSelection is used as a
-             // tie-breaking rule.
+      true;  // conflict priortization. If true, conflictSelection is used as
+             // a tie-breaking rule.
   bool _disjointSplitting =
       false;  // disjoint splitting. If true, disjoint splitting is used.
   bool _bypass = true;
