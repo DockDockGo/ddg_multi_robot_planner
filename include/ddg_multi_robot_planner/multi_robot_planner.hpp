@@ -222,12 +222,10 @@ class MultiRobotPlanner : public rclcpp::Node {
   int _map_height;
   int _map_width;
 
-  // CBS object
-  // CBS cbs;
-  std::string _agentIdx =
-      "";         // customize the indices of the agents (e.g., \"0,1\")
-  int _rows = 0;  // number of rows | default 0
-  int _cols = 0;  // number of cols | default 0
+  // Parameters for the CBS algorithm:
+  std::string _agentIdx = "";
+  int _rows = 0;            // number of rows | default 0
+  int _cols = 0;            // number of cols | default 0
   int _num_obstacles = 0;   // number of obstacles | default 0
   int _warehouseWidth = 0;  // width of working stations on both sides, for
                             // generating instances | default 0
@@ -256,6 +254,7 @@ class MultiRobotPlanner : public rclcpp::Node {
 
   double _cutoffTime = 120.0;  // cutoff time in seconds | default 60.0
 
+  // Paramters for ROS2 Multirobot planner:
   float orignal_map_resolution = 0.05;           // every cell is 0.05m
   std::vector<double> origin_ = {-3.96, -3.26};  // origin of the original map
   std::vector<long int> original_map_size_ = {
