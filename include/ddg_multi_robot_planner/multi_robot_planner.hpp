@@ -72,8 +72,8 @@ class MultiRobotPlanner : public rclcpp::Node {
       std::vector<nav_msgs::msg::Path> &planned_paths);
   void convertPathToPosePath(StatePath &state_path, PosePath &pose_path);
   bool Initialize();
-  AgentState coordToCBS(geometry_msgs::msg::Pose robot_pose);
-  geometry_msgs::msg::Pose coordToGazebo(AgentState &agent_state);
+  AgentState worldToDownsampledMap(geometry_msgs::msg::Pose robot_pose);
+  geometry_msgs::msg::Pose downsampledMapToWorld(AgentState &agent_state);
 
   void callCBS(std::vector<StatePath> &planned_paths);
   void printStatePath(StatePath agent_path);
@@ -214,6 +214,11 @@ class MultiRobotPlanner : public rclcpp::Node {
   std::string _planned_path_file_name =
       "/home/admin/ddg_mfi/mp_400_ws/src/ddg_multi_robot_planner/maps/"
       "planned-paths.txt";
+
+  std::string downsampled_map_file_path =
+      "/home/admin/ddg_mfi/mp_400_ws/src/ddg_multi_robot_planner/maps/"
+      "svd_demo-parsed-map.txt";
+
   int _map_height;
   int _map_width;
 
@@ -251,15 +256,17 @@ class MultiRobotPlanner : public rclcpp::Node {
 
   double _cutoffTime = 120.0;  // cutoff time in seconds | default 60.0
 
-  double orignal_map_resolution = 0.05;          // every cell is 0.05m
+  float orignal_map_resolution = 0.05;           // every cell is 0.05m
   std::vector<double> origin_ = {-3.96, -3.26};  // origin of the original map
-  std::vector<int> original_map_size_ = {443,
-                                         149};  // origin of the original map
-  std::vector<double> offset_ = {0.2, 0.7};     // origin of the original map
-  double downsampling_factor = 20.0;            // downsampling factor of 10
-  AgentState dummy_state = {0, 0};
+  std::vector<long int> original_map_size_ = {
+      443, 149};                             // origin of the original map
+  std::vector<double> offset_ = {0.2, 0.7};  // origin of the original map
+  float downsampling_factor = 20.0;          // downsampling factor of 10
+  AgentState zero_state = {0, 0};
 
   bool goal_received = false;
+  bool use_inbuilt_waypoint_follower = false;
+  bool use_sim = false;
 };
 
 }  // namespace multi_robot_planner
