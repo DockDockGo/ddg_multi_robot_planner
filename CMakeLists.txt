@@ -52,6 +52,8 @@ ament_target_dependencies(${lib_name}
 
 install(DIRECTORY launch DESTINATION share/${PROJECT_NAME}/)
 
+install(DIRECTORY maps DESTINATION share/${PROJECT_NAME}/)
+
 install(DIRECTORY include/
   DESTINATION include/
 )

@@ -256,9 +256,9 @@ class MultiRobotPlanner : public rclcpp::Node {
 
   // Paramters for ROS2 Multirobot planner:
   float orignal_map_resolution = 0.05;           // every cell is 0.05m
-  std::vector<double> origin_ = {-3.96, -3.26};  // origin of the original map
+  std::vector<double> origin_ = {-19.7, -14.4};  // origin of the original map
   std::vector<long int> original_map_size_ = {
-      443, 149};                             // origin of the original map
+      836, 1123};                            // origin of the original map
   std::vector<double> offset_ = {0.2, 0.7};  // origin of the original map
   float downsampling_factor = 20.0;          // downsampling factor of 10
   AgentState zero_state = {0, 0};

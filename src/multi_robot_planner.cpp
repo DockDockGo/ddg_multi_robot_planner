@@ -22,17 +22,21 @@ MultiRobotPlanner::MultiRobotPlanner() : Node("multi_robot_planner_node") {
   this->get_parameter("downsampled_map_file_path", downsampled_map_file_path);
 
   this->declare_parameter<float>("downsampling_factor", 20.0);
-  this->get_parameter<float>("downsampling_factor", downsampling_factor);
+  this->get_parameter("downsampling_factor", downsampling_factor);
 
   this->declare_parameter<float>("orignal_map_resolution", 0.05);
-  this->get_parameter<float>("orignal_map_resolution", orignal_map_resolution);
+  this->get_parameter("orignal_map_resolution", orignal_map_resolution);
 
-  this->get_parameter<std::vector<double>>("original_origin", origin_);
+  this->declare_parameter<std::vector<double>>("original_origin",
+                                               {-19.7, -14.4});
+  this->get_parameter("original_origin", origin_);
 
-  this->get_parameter<std::vector<double>>("offset", offset_);
+  this->declare_parameter<std::vector<double>>("offset", {0.2, 0.7});
+  this->get_parameter("offset", offset_);
 
-  this->get_parameter<std::vector<long int>>("original_map_size",
-                                             original_map_size_);
+  this->declare_parameter<std::vector<long int>>("original_map_size",
+                                                 {836, 1123});
+  this->get_parameter("original_map_size", original_map_size_);
 
   // Print the parameters
   RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "use_sim: " << use_sim);
@@ -187,9 +191,11 @@ bool MultiRobotPlanner::Initialize() {
   // instance_ptr = std::make_shared<Instance>(
   //     "./src/ddg_multi_robot_planner/maps/svddemo-14-44-2.map");
 
-  instance_ptr = std::make_shared<Instance>(
-      "./src/ddg_multi_robot_planner/maps/downsampled-map/res20/"
-      "svd_demo-downsampled.map");
+  // instance_ptr = std::make_shared<Instance>(
+  //     "./src/ddg_multi_robot_planner/maps/downsampled-map/res20/"
+  //     "svd_demo-downsampled.map");
+
+  instance_ptr = std::make_shared<Instance>(downsampled_map_file_path);
 
   AgentState tmp_state;
   tempPose.position.x = -1.6;

@@ -16,7 +16,7 @@ def generate_launch_description():
     ld = LaunchDescription()
     use_sim = DeclareLaunchArgument(
         "use_sim",
-        default_value="True",
+        default_value="False",
         description="Simulation or Real)",
     )
     num_robots = DeclareLaunchArgument(
@@ -34,33 +34,33 @@ def generate_launch_description():
         "downsampled_map_file_path",
         default_value=os.path.join(
             my_package_share_directory,
-            "maps/downsampled-map/res20/svd_demo-downsampled.map",
+            "maps/downsampled-map/Oct-16/Oct-16-downsampled.map",
         ),
         description="Path to the map file",
     )
     downsampling_factor = DeclareLaunchArgument(
         "downsampling_factor",
-        default_value="20.0",
+        default_value="30.0",
         description="downsampling scale from the original map",
     )
-    downsampling_faorignal_map_resolutionctor = DeclareLaunchArgument(
-        "downsampling_faorignal_map_resolutionctor",
-        default_value="0.05",
+    orignal_map_resolution = DeclareLaunchArgument(
+        "orignal_map_resolution",
+        default_value="0.03",
         description="resolution of the original map",
     )
     original_origin = DeclareLaunchArgument(
         "original_origin",
-        default_value="['-3.96', '-3.26']",
+        default_value="[-19.7, -14.4]",
         description="origin of the original map",
     )
     offset = DeclareLaunchArgument(
         "offset",
-        default_value="['0.2', '0.7']",
+        default_value="[0.2, 0.7]",
         description="Offest to be added to the downsmpled map such that the tranform results in waypoints at the center of the cells",
     )
     original_map_size = DeclareLaunchArgument(
         "original_map_size",
-        default_value="['443', '149']",
+        default_value="[836, 1123]",
         description="size of the original map",
     )
 
@@ -71,7 +71,7 @@ def generate_launch_description():
     # Downsampled map parameters
     ld.add_action(downsampled_map_file_path)
     ld.add_action(downsampling_factor)
-    ld.add_action(downsampling_faorignal_map_resolutionctor)
+    ld.add_action(orignal_map_resolution)
     ld.add_action(original_origin)
     ld.add_action(offset)
     ld.add_action(original_map_size)
@@ -94,11 +94,7 @@ def generate_launch_description():
                 )
             },
             {"downsampling_factor": LaunchConfiguration("downsampling_factor")},
-            {
-                "downsampling_faorignal_map_resolutionctor": LaunchConfiguration(
-                    "downsampling_faorignal_map_resolutionctor"
-                )
-            },
+            {"orignal_map_resolution": LaunchConfiguration("orignal_map_resolution")},
             {"original_origin": LaunchConfiguration("original_origin")},
             {"offset": LaunchConfiguration("offset")},
             {"original_map_size": LaunchConfiguration("original_map_size")},
