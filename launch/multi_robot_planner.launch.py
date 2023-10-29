@@ -43,24 +43,24 @@ def generate_launch_description():
         default_value="20.0",
         description="downsampling scale from the original map",
     )
-    downsampling_faorignal_map_resolutionctor = DeclareLaunchArgument(
-        "downsampling_faorignal_map_resolutionctor",
+    orignal_map_resolution = DeclareLaunchArgument(
+        "orignal_map_resolution",
         default_value="0.05",
         description="resolution of the original map",
     )
     original_origin = DeclareLaunchArgument(
         "original_origin",
-        default_value="['-3.96', '-3.26']",
+        default_value="[-3.96, -3.26]",
         description="origin of the original map",
     )
     offset = DeclareLaunchArgument(
         "offset",
-        default_value="['0.2', '0.7']",
+        default_value="[0.2, 0.7]",
         description="Offest to be added to the downsmpled map such that the tranform results in waypoints at the center of the cells",
     )
     original_map_size = DeclareLaunchArgument(
         "original_map_size",
-        default_value="['443', '149']",
+        default_value="[443, 149]",
         description="size of the original map",
     )
 
@@ -71,7 +71,7 @@ def generate_launch_description():
     # Downsampled map parameters
     ld.add_action(downsampled_map_file_path)
     ld.add_action(downsampling_factor)
-    ld.add_action(downsampling_faorignal_map_resolutionctor)
+    ld.add_action(orignal_map_resolution)
     ld.add_action(original_origin)
     ld.add_action(offset)
     ld.add_action(original_map_size)

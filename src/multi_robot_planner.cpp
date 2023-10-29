@@ -22,17 +22,21 @@ MultiRobotPlanner::MultiRobotPlanner() : Node("multi_robot_planner_node") {
   this->get_parameter("downsampled_map_file_path", downsampled_map_file_path);
 
   this->declare_parameter<float>("downsampling_factor", 20.0);
-  this->get_parameter<float>("downsampling_factor", downsampling_factor);
+  this->get_parameter("downsampling_factor", downsampling_factor);
 
   this->declare_parameter<float>("orignal_map_resolution", 0.05);
-  this->get_parameter<float>("orignal_map_resolution", orignal_map_resolution);
+  this->get_parameter("orignal_map_resolution", orignal_map_resolution);
 
-  this->get_parameter<std::vector<double>>("original_origin", origin_);
+  this->declare_parameter<std::vector<double>>("original_origin",
+                                               {-3.96, -3.26});
+  this->get_parameter("original_origin", origin_);
 
-  this->get_parameter<std::vector<double>>("offset", offset_);
+  this->declare_parameter<std::vector<double>>("offset", {0.2, 0.7});
+  this->get_parameter("offset", offset_);
 
-  this->get_parameter<std::vector<long int>>("original_map_size",
-                                             original_map_size_);
+  this->declare_parameter<std::vector<long int>>("original_map_size",
+                                                 {443, 149});
+  this->get_parameter("original_map_size", original_map_size_);
 
   // Print the parameters
   RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "use_sim: " << use_sim);
