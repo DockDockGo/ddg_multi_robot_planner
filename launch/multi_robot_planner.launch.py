@@ -94,11 +94,7 @@ def generate_launch_description():
                 )
             },
             {"downsampling_factor": LaunchConfiguration("downsampling_factor")},
-            {
-                "downsampling_faorignal_map_resolutionctor": LaunchConfiguration(
-                    "downsampling_faorignal_map_resolutionctor"
-                )
-            },
+            {"orignal_map_resolution": LaunchConfiguration("orignal_map_resolution")},
             {"original_origin": LaunchConfiguration("original_origin")},
             {"offset": LaunchConfiguration("offset")},
             {"original_map_size": LaunchConfiguration("original_map_size")},
