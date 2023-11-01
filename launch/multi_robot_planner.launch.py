@@ -55,7 +55,7 @@ def generate_launch_description():
     )
     offset = DeclareLaunchArgument(
         "offset",
-        default_value="[0.2, 0.7]",
+        default_value="[0.6, 0.7]",
         description="Offest to be added to the downsmpled map such that the tranform results in waypoints at the center of the cells",
     )
     original_map_size = DeclareLaunchArgument(
