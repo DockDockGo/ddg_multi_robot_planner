@@ -110,10 +110,7 @@ class MultiRobotPlanner : public rclcpp::Node {
   void publishPlannedPaths(std::vector<nav_msgs::msg::Path> &planned_paths);
   void publishPlannedPaths(std::vector<std::pair<int, int>> &planned_paths);
   void timer_callback();
-  //   void RobotPoseCallback(const nav_msgs::msg::Odometry::SharedPtr msg);
-  //   void RobotPoseCallback(
-  //       const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr
-  //       msg);
+
   void RobotPoseCallback();
   void RobotGoalPoseCallback(
       const geometry_msgs::msg::PoseStamped::SharedPtr msg);
@@ -129,8 +126,6 @@ class MultiRobotPlanner : public rclcpp::Node {
   std::vector<std::deque<geometry_msgs::msg::Pose>> robots_paths;
   std::vector<geometry_msgs::msg::Pose> robot_waypoints;
   std::vector<geometry_msgs::msg::Pose> robot_curr_poses;
-  // std::unordered_map<std::string, geometry_msgs::msg::PoseStamped>
-  //     robot_curr_poses;
   std::vector<geometry_msgs::msg::Pose> robot_start_poses;
   std::vector<geometry_msgs::msg::Pose> robot_goal_poses;
 
@@ -146,7 +141,7 @@ class MultiRobotPlanner : public rclcpp::Node {
   // Private variables
  private:
   // ROS2 vars
-  rclcpp::Clock::SharedPtr clock_;
+
   std::vector<rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr>
       agents_pub_pose;
   std::vector<rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr>
@@ -156,8 +151,6 @@ class MultiRobotPlanner : public rclcpp::Node {
 
   std::vector<rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr>
       agents_pub_path;
-  //   std::vector<rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr>
-  //       agents_sub_pose;
 
   std::vector<rclcpp::Subscription<
       geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr>
@@ -177,8 +170,6 @@ class MultiRobotPlanner : public rclcpp::Node {
 
   std::vector<AgentState> GLOBAL_START;
   std::vector<AgentState> GLOBAL_GOAL;
-  //   std::vector<geometry_msgs::msg::Pose> target_pose;
-  //   std::vector<geometry_msgs::msg::Pose> GLOBAL_GOAL_WORLD_COORD;
   // test only
   rclcpp::Publisher<std_msgs::msg::String>::SharedPtr publisher_;
   size_t count_;
@@ -265,7 +256,6 @@ class MultiRobotPlanner : public rclcpp::Node {
 
   bool goal_received = false;
   bool use_inbuilt_waypoint_follower = false;
-  bool use_sim = false;
 };
 
 }  // namespace multi_robot_planner

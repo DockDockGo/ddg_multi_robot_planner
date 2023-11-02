@@ -5,20 +5,13 @@ from launch_ros.actions import Node
 from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
 
-# MY_NO_ROBOTS = os.environ["Number_of_Robots"]
-# MY_NEO_ENVIRONMENT = os.environ.get("MAP_NAME", "mfi")
-
 
 def generate_launch_description():
     # Get the path to the ROS2 package
     my_package_share_directory = get_package_share_directory("ddg_multi_robot_planner")
     # Create the ROS2 launch description
     ld = LaunchDescription()
-    use_sim = DeclareLaunchArgument(
-        "use_sim",
-        default_value="True",
-        description="Simulation or Real)",
-    )
+
     num_robots = DeclareLaunchArgument(
         "num_robots",
         default_value="2",
@@ -64,7 +57,6 @@ def generate_launch_description():
         description="size of the original map",
     )
 
-    ld.add_action(use_sim)
     ld.add_action(num_robots)
     ld.add_action(use_inbuilt_waypoint_follower)
 
@@ -81,7 +73,6 @@ def generate_launch_description():
         executable="ddg_multi_robot_planner_node",
         output="screen",
         parameters=[
-            {"use_sim": LaunchConfiguration("use_sim")},
             {"num_robots": LaunchConfiguration("num_robots")},
             {
                 "use_inbuilt_waypoint_follower": LaunchConfiguration(

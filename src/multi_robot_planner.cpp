@@ -6,9 +6,6 @@
 // #include <CBS.h>
 namespace multi_robot_planner {
 MultiRobotPlanner::MultiRobotPlanner() : Node("multi_robot_planner_node") {
-  this->declare_parameter<bool>("use_sim", true);
-  this->get_parameter("use_sim", use_sim);
-
   this->declare_parameter<int>("num_robots", 2);
   this->get_parameter("num_robots", _agentNum);
 
@@ -39,7 +36,6 @@ MultiRobotPlanner::MultiRobotPlanner() : Node("multi_robot_planner_node") {
   this->get_parameter("original_map_size", original_map_size_);
 
   // Print the parameters
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "use_sim: " << use_sim);
   RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"), "num_robots: " << _agentNum);
   RCLCPP_INFO_STREAM(
       rclcpp::get_logger("rclcpp"),
@@ -59,8 +55,6 @@ MultiRobotPlanner::MultiRobotPlanner() : Node("multi_robot_planner_node") {
   RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"),
                      "original_map_size: [" << original_map_size_[0] << ", "
                                             << original_map_size_[1] << "]");
-
-  clock_ = get_clock();
 
   RCLCPP_INFO_STREAM(rclcpp::get_logger("rclcpp"),
                      "Start multi robot planner!");
@@ -306,7 +300,7 @@ void MultiRobotPlanner::PublishSingleMarker(int agent_idx,
                                             std::string marker_type) {
   visualization_msgs::msg::Marker marker;
   marker.header.frame_id = "map";
-  marker.header.stamp = clock_->now();
+  marker.header.stamp = this->get_clock()->now();
   marker.ns = marker_type;
   marker.id = 0;
   marker.action = visualization_msgs::msg::Marker::ADD;
@@ -348,14 +342,14 @@ void MultiRobotPlanner::PublishSingleMarker(int agent_idx,
 void MultiRobotPlanner::PublishCBSPath(int agent_idx, StatePath &agent_path) {
   nav_msgs::msg::Path pose_path;
   pose_path.header.frame_id = "map";
-  pose_path.header.stamp = clock_->now();
+  pose_path.header.stamp = this->get_clock()->now();
   for (auto entry : agent_path) {
     geometry_msgs::msg::PoseStamped tmp_pose;
     geometry_msgs::msg::Pose tmp_tmp_pose;
     tmp_tmp_pose = downsampledMapToWorld(entry);
     tmp_pose.pose = tmp_tmp_pose;
     tmp_pose.header.frame_id = "map";
-    tmp_pose.header.stamp = clock_->now();
+    tmp_pose.header.stamp = this->get_clock()->now();
     pose_path.poses.push_back(tmp_pose);
   }
   agents_pub_path[agent_idx]->publish(pose_path);
@@ -450,7 +444,7 @@ void MultiRobotPlanner::publishPlannedPaths(
   for (unsigned int i = 0; i < planned_paths.size(); i++) {
     geometry_msgs::msg::PoseStamped goal_pose;
     goal_pose.header.frame_id = "map";
-    goal_pose.header.stamp = clock_->now();
+    goal_pose.header.stamp = this->get_clock()->now();
     goal_pose.pose.position.x = planned_paths[i].first * 1.0;
     goal_pose.pose.position.y = planned_paths[i].second * 1.0;
     goal_pose.pose.position.z = 0.0;
@@ -465,7 +459,7 @@ void MultiRobotPlanner::publishWaypoint(geometry_msgs::msg::Pose &waypoint,
                                         int agent_id) {
   geometry_msgs::msg::PoseStamped goal_pose;
   goal_pose.header.frame_id = "map";
-  goal_pose.header.stamp = clock_->now();
+  goal_pose.header.stamp = this->get_clock()->now();
   goal_pose.pose = waypoint;
   agents_pub_pose[agent_id]->publish(goal_pose);
 }
@@ -904,8 +898,7 @@ bool MultiRobotPlanner::updateRobotPlan(
 bool MultiRobotPlanner::getRobotPose(
     std::string &robot_namespace, geometry_msgs::msg::PoseStamped &robot_pose) {
   std::string target_frame = "map";  // The frame you want the pose in
-  std::string source_frame =
-      robot_namespace + ((use_sim) ? "base_link" : "/base_link");
+  std::string source_frame = robot_namespace + "/base_link";
 
   geometry_msgs::msg::TransformStamped transform_stamped;
   try {
@@ -998,6 +991,7 @@ bool MultiRobotPlanner::planPaths(
 
     for (auto state_pose : planned_paths[i]) {
       geometry_msgs::msg::PoseStamped tmp_robot_pose;
+      tmp_robot_pose.header.stamp = this->get_clock()->now();
       tmp_robot_pose.header.frame_id = "map";
       tmp_robot_pose.pose = downsampledMapToWorld(state_pose);
       tmp_pose_path.poses.push_back(tmp_robot_pose);
