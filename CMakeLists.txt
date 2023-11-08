@@ -63,7 +63,7 @@ install(TARGETS ${lib_name}
 )
 
 ament_export_include_directories(include)
-ament_export_libraries(${lib_name})
+# ament_export_libraries(${lib_name})
 ament_export_dependencies(${dependencies}
 )
 
