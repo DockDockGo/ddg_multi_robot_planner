@@ -11,8 +11,14 @@ The lead contributors to this package are:
 ## Results: 
 | Case | Gif |
 |--------|-----|
-| Smart planning to avoid collisions | ![Smart rerouting to avoid collisions](/gifs/cbs-corridor-updated.gif) |
-| Avoiding collision by planning temporaly safe paths | ![Smart rerouting to avoid collisions](/gifs/cbs-temporal-updated.gif) |
+| Smart planning to avoid collisions (2 Robots) | <img src="./gifs/cbs-corridor-updated.gif" width="250"/> |
+| Avoiding collision by planning temporaly safe paths (2 Robots) | <img src="./gifs/cbs-temporal-updated.gif" width="250"/>|
+| Target Reasoning (4 Robots) | <img src="./gifs/4-robots-2.gif" width="250"/>|
+| Corridor Reasoning (4 Robots) | <img src="./gifs/4-robots-4.gif" width="250"/>|
+| Rectangle Reasoning + Target Reasoning (4 Robots) | <img src="./gifs/4-robots-5.gif" width="250"/>|
+| Avoiding collision by planning non conflicting paths (4 Robots) | <img src="./gifs/4-robots-3.gif" width="250"/>|
+| Avoiding collision by planning non conflicting paths (4 Robots) | <img src="./gifs/4-robots-6.gif" width="250"/>|
+
 
 ## Paramters exposed in the launch file:
 
